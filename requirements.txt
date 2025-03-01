@@ -8,3 +8,6 @@ openpyxl
 ollama
 openai==0.28
 dotenv
+selenium
+webdriver-manager
+
