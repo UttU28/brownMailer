@@ -4,7 +4,8 @@ import requests
 from dotenv import load_dotenv
 import openai
 import re
-from utils.prompts import COMPACT_PROMPT
+try: from utils.prompts import MKD_SYSTEM_PROMPT, MKD_COMPACT_PROMPT, EML_SYSTEM_PROMPT, EML_USER_PROMPT
+except: from prompts import MKD_SYSTEM_PROMPT, MKD_COMPACT_PROMPT, EML_SYSTEM_PROMPT, EML_USER_PROMPT
 import ollama
 import time
 from colorama import Fore, Style
@@ -53,24 +54,27 @@ def convertToMarkdown(cleanedResults):
     print(Fore.GREEN + "✔ Markdown conversion completed!" + Style.RESET_ALL)
     return markdown
 
+def callOllama(sysPrompt, userPrompt):
+    response = ollama.chat(
+        model='llama3.2', 
+        messages=[
+            {"role": "system", "content": sysPrompt},
+            {"role": "user", "content": userPrompt}
+        ],
+        options={
+            "temperature": 0.0,
+            "top_p": 1.0,
+            "frequency_penalty": 0.0,
+            "presence_penalty": 0.0
+        }
+    )
+    return response['message']['content'].strip()
+
 def extractDataFromMarkdown(markdownText):
     try:
         print(Fore.BLUE + "Extracting data from Markdown..." + Style.RESET_ALL)
         start_time = time.time()
-        response = ollama.chat(
-            model='llama3.2', 
-            messages=[
-                {"role": "system", "content": "You are an AI that extracts structured data ONLY from Markdown and returns JSON."},
-                {"role": "user", "content": COMPACT_PROMPT.format(markdownText=markdownText)}
-            ],
-            options={
-                "temperature": 0.0,
-                "top_p": 1.0,
-                "frequency_penalty": 0.0,
-                "presence_penalty": 0.0
-            }
-        )
-        rawContent = response['message']['content'].strip()
+        rawContent = callOllama(MKD_SYSTEM_PROMPT, MKD_COMPACT_PROMPT.format(markdownText=markdownText))
         match = re.search(r'```json\n(.*?)\n```', rawContent, re.DOTALL) or re.search(r'```\n(.*?)\n```', rawContent, re.DOTALL) or re.search(r'\[\s*\{.*\}\s*\]', rawContent, re.DOTALL)
         if match:
             end_time = time.time()
@@ -105,18 +109,23 @@ def getPeopleFromCompany(companyName):
         baseString = f"site:linkedin.com/in \"{companyName}\" (\"Recruiter\" OR \"Talent Acquisition Specialist\" OR \"Hiring Manager\" OR \"HR Business Partner\" OR \"Recruitment Coordinator\")"
         
         rawResults = googleSearch(baseString, googleApiKey, googleCseId)
-        # with open("data/raw_results.json", "w") as raw_file:
+        # with open("../data/raw_results.json", "w") as raw_file:
         #     json.dump(rawResults, raw_file, indent=4)
 
-        # with open("data/raw_results.json", "r") as raw_file:
+        # with open("../data/raw_results.json", "r") as raw_file:
         #     rawResults = json.load(raw_file)
 
         cleanedResults = cleanResults(rawResults)
         markdownText = convertToMarkdown(cleanedResults)
         extractedData = extractDataFromMarkdown(markdownText)
 
+        # with open(f"../data/extracted_data_{companyName.replace(' ', '_').replace('.', '_')}.json", "r") as file:
+        #     extractedData = json.load(file)
+        #     json.dump(extractedData, file, indent=4)
+
         print(Fore.BLUE + "Fetching emails from SalesQL..." + Style.RESET_ALL)
         peopleWithEmails = []
+        uniqueDomains = set()
         for person in tqdm(extractedData, desc="Processing people", colour="cyan"):
             linkedinUrl = person.get("linkedin", "")
             if linkedinUrl:
@@ -124,12 +133,41 @@ def getPeopleFromCompany(companyName):
                 person["emails"] = prioritizeEmails(emails.get("emails", []))
                 if person["emails"]:  # Only keep people with non-empty emails
                     peopleWithEmails.append(person)
+                    # Extract domains from emails
+                    for email in person["emails"]:
+                        domain = email.split("@")[1]
+                        uniqueDomains.add(domain)
+        domainList = list(uniqueDomains)
+
+
+        resArray = callOllama(EML_SYSTEM_PROMPT, EML_USER_PROMPT.format(domains=domainList, totalDomains=len(domainList), companyName=companyName))
+        try: thisArray = json.loads(resArray)
+        except: thisArray = [1] * len(domainList)
+        domainResponses = list(zip(domainList, thisArray))
+        excludedDomains = {'gmail.com', 'yahoo.com', 'outlook.com'}
+        matchingDomains = [domain for domain, value in domainResponses   if value == 1 and domain not in excludedDomains]
+
+        # Filter people with matching domains and keep only matching emails
+        filteredPeople = []
+        for person in peopleWithEmails:
+            matchingEmails = [email for email in person["emails"] 
+                            if any(email.endswith("@" + domain) for domain in matchingDomains)]
+            if matchingEmails:
+                personCopy = person.copy()
+                personCopy["emails"] = matchingEmails
+                filteredPeople.append(personCopy)
         
+        peopleWithEmails = filteredPeople
+
+
+        print(f"Found {len(peopleWithEmails)} people with company email domains")
+        print(f"Matching domains: {matchingDomains}")
+        print(Fore.BLUE + f"Unique domains found: {len(uniqueDomains)}" + Style.RESET_ALL)
         print(Fore.GREEN + "✔ Fetching from SalesQL completed!" + Style.RESET_ALL)
         print(Fore.BLUE + "Saving data to JSON file..." + Style.RESET_ALL)
-        # with open(f"data/search_results_{companyName.replace(' ', '_').replace('.', '_')}.json", "w") as file:
-        #     json.dump(peopleWithEmails, file, indent=4)
-        # print(Fore.GREEN + "✔ Data saved to JSON file successfully!" + Style.RESET_ALL)
+        with open(f"data/search_results_{companyName.replace(' ', '_').replace('.', '_')}.json", "w") as file:
+            json.dump(peopleWithEmails, file, indent=4)
+        print(Fore.GREEN + "✔ Data saved to JSON file successfully!" + Style.RESET_ALL)
         print(Fore.GREEN + "✔ Process completed successfully!" + Style.RESET_ALL)
 
         return peopleWithEmails

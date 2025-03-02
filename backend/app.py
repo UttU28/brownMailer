@@ -52,6 +52,8 @@ class CompanyRequest(BaseModel):
 
 class EmailRequest(BaseModel):
     email: str
+    position: Optional[str] = None
+    jobId: Optional[str] = None
 
 @app.post("/getPeople")
 async def getPeople(request: CompanyRequest):
@@ -94,12 +96,22 @@ async def getPeople(request: CompanyRequest):
 async def sendEmail(request: EmailRequest):
     try:
         print(f"Adding email to queue: {request.email}")
+        if request.position:
+            print(f"For position: {request.position}")
+        if request.jobId:
+            print(f"Job ID: {request.jobId}")
+            
         # Here you would typically call your email drafting function
-        # createDraft(request.email)
+        # createDraft(request.email, position=request.position, jobId=request.jobId)
+        
         return JSONResponse(content={
             "status": "success",
             "message": "Email added to queue",
-            "email": request.email
+            "email": request.email,
+            "metadata": {
+                "position": request.position,
+                "jobId": request.jobId
+            }
         })
     except Exception as e:
         return JSONResponse(

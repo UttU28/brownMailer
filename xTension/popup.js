@@ -172,10 +172,35 @@ function displayResults(data) {
         return;
     }
 
+    // Store job info for later use
+    let currentJobInfo = null;
+
+    // Check if we're on LinkedIn jobs page and get job info
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+        const tab = tabs[0];
+        if (tab.url.startsWith('https://www.linkedin.com/jobs/view/')) {
+            const jobInfoResult = await chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                func: () => {
+                    const positionElement = document.querySelector('.job-details-jobs-unified-top-card__job-title h1');
+                    const applyButton = document.querySelector('.jobs-apply-button');
+                    return {
+                        position: positionElement ? positionElement.textContent.trim() : '',
+                        jobId: applyButton ? applyButton.getAttribute('data-job-id') : ''
+                    };
+                }
+            });
+            currentJobInfo = jobInfoResult[0].result;
+        }
+    });
+
     data.forEach(person => {
         const firstEmail = person.emails.length > 0 ? person.emails[0] : "No email available";
         const position = person.position || "No position listed";
         const linkedinURL = person.linkedin || "#";
+        
+        // Extract domain from email
+        const emailDomain = firstEmail !== "No email available" ? firstEmail.split('@')[1] : "No email available";
 
         const row = document.createElement("tr");
         row.innerHTML = `
@@ -187,7 +212,7 @@ function displayResults(data) {
             </td>
             <td class="position">${position}</td>
             <td>
-                <div class="email-text" title="Click to copy">${firstEmail}</div>
+                <div class="email-text" title="${firstEmail}">@${emailDomain}</div>
             </td>
             <td>
                 <div class="send-btn" data-email="${firstEmail}" title="Send Email">
@@ -202,7 +227,7 @@ function displayResults(data) {
     // Add click handlers for email copying
     document.querySelectorAll(".email-text").forEach(emailDiv => {
         emailDiv.addEventListener("click", () => {
-            const email = emailDiv.textContent;
+            const email = emailDiv.getAttribute("title"); // Use full email from title attribute
             copyToClipboard(email);
             showNotification("Email copied to clipboard!");
         });
@@ -213,7 +238,7 @@ function displayResults(data) {
         button.addEventListener("click", async () => {
             const email = button.getAttribute("data-email");
             if (email && email !== "No email available") {
-                await sendEmail(email);
+                await sendEmail(email, currentJobInfo);
             }
         });
     });
@@ -354,13 +379,21 @@ async function fetchPeople() {
     }
 }
 
-// Update the sendEmail function to use notifications instead of alerts
-async function sendEmail(email) {
+// Update the sendEmail function to include job info
+async function sendEmail(email, jobInfo = null) {
     try {
+        const payload = { email };
+        
+        // If we have job info, add it to the payload
+        if (jobInfo) {
+            payload.position = jobInfo.position;
+            payload.jobId = jobInfo.jobId;
+        }
+
         const response = await fetch("http://localhost:3000/sendEmail", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email })
+            body: JSON.stringify(payload)
         });
 
         const data = await response.json();
