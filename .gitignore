@@ -1,4 +1,7 @@
 env/
 env/*
 *.json
+*.pdf
+*.pickle
 .env
+__pycache__/

@@ -74,7 +74,7 @@ EXTRACTION_PROMPT = r"""
     """ 
 
 COMPACT_PROMPT = r"""
-    Extract structured data **ONLY** from the provided Markdown content. **Return details for explicitly named individuals** with the following fields:  
+    Extract structured data **ONLY** from the provided Markdown content. **Return linkedin URL details for explicitly named individuals** with the following fields:  
 
     - **Full Name**  
     - **Position**  
