@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>People Finder</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="input-container">
+            <input type="text" id="companyInput" placeholder="Enter company name">
+            <button id="sendRequest">Search</button>
+        </div>
+        <div id="loadingMessage" class="hidden">
+            <div class="loader"></div>
+            <p id="loadingText">Fetching people...</p>
+        </div>
+        <div id="responseContainer">
+            <table id="resultsTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Position</th>
+                        <th>LinkedIn</th>
+                        <th>Email</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>

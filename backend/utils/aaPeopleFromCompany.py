@@ -104,12 +104,12 @@ def getPeopleFromCompany(companyName):
     try:
         baseString = f"site:linkedin.com/in \"{companyName}\" (\"Recruiter\" OR \"Talent Acquisition Specialist\" OR \"Hiring Manager\" OR \"HR Business Partner\" OR \"Recruitment Coordinator\")"
         
-        # rawResults = googleSearch(baseString, googleApiKey, googleCseId)
+        rawResults = googleSearch(baseString, googleApiKey, googleCseId)
         # with open("data/raw_results.json", "w") as raw_file:
         #     json.dump(rawResults, raw_file, indent=4)
 
-        with open("data/raw_results.json", "r") as raw_file:
-            rawResults = json.load(raw_file)
+        # with open("data/raw_results.json", "r") as raw_file:
+        #     rawResults = json.load(raw_file)
 
         cleanedResults = cleanResults(rawResults)
         markdownText = convertToMarkdown(cleanedResults)
