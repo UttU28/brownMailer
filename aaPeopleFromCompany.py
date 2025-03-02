@@ -31,7 +31,7 @@ def googleSearch(query, apiKey, cseId):
         print(Fore.GREEN + "✔ Google Search completed successfully!" + Style.RESET_ALL)
         return response.json()
     except requests.exceptions.RequestException as e:
-        print(Fore.RED + f"❌ Error during Google Search: {e}" + Style.RESET_ALL)
+        print(Fore.RED + f"✘ Error during Google Search: {e}" + Style.RESET_ALL)
         return {}
 
 def cleanResults(rawResults):
@@ -79,7 +79,7 @@ def extractDataFromMarkdown(markdownText):
         else:
             raise ValueError("No valid JSON found in response.")
     except Exception as e:
-        print(Fore.RED + f"❌ Error extracting data from Markdown: {e}" + Style.RESET_ALL)
+        print(Fore.RED + f"✘ Error extracting data from Markdown: {e}" + Style.RESET_ALL)
         return []
 
 def getEmailFromSalesQL(linkedinUrl, apiKey):
@@ -89,7 +89,7 @@ def getEmailFromSalesQL(linkedinUrl, apiKey):
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException:
-        print(Fore.RED + f"❌ Error fetching email for {linkedinUrl}" + Style.RESET_ALL)
+        print(Fore.RED + f"✘ Error fetching email for {linkedinUrl}" + Style.RESET_ALL)
         return {"emails": []}
 
 def prioritizeEmails(emails):
@@ -100,17 +100,16 @@ def prioritizeEmails(emails):
     personalEmails = [e["email"] for e in emails if e["type"] == "Direct"]
     return workValid + workUnverifiable + personalEmails
 
-def main():
+def getPeopleFromCompany(companyName):
     try:
-        companyName = "Entegris"
         baseString = f"site:linkedin.com/in \"{companyName}\" (\"Recruiter\" OR \"Talent Acquisition Specialist\" OR \"Hiring Manager\" OR \"HR Business Partner\" OR \"Recruitment Coordinator\")"
         
         rawResults = googleSearch(baseString, googleApiKey, googleCseId)
-        with open("data/raw_results.json", "w") as raw_file:
-            json.dump(rawResults, raw_file, indent=4)
+        # with open("data/raw_results.json", "w") as raw_file:
+        #     json.dump(rawResults, raw_file, indent=4)
 
-        with open("data/raw_results.json", "r") as raw_file:
-            rawResults = json.load(raw_file)
+        # with open("data/raw_results.json", "r") as raw_file:
+        #     rawResults = json.load(raw_file)
 
         cleanedResults = cleanResults(rawResults)
         markdownText = convertToMarkdown(cleanedResults)
@@ -125,12 +124,16 @@ def main():
         
         print(Fore.GREEN + "✔ Fetching from SalesQL completed!" + Style.RESET_ALL)
         print(Fore.BLUE + "Saving data to JSON file..." + Style.RESET_ALL)
-        with open("data/search_results.json", "w") as file:
+        with open(f"data/search_results_{companyName.replace(' ', '_').replace('.', '_')}.json", "w") as file:
             json.dump(extractedData, file, indent=4)
         print(Fore.GREEN + "✔ Data saved to JSON file successfully!" + Style.RESET_ALL)
         print(Fore.GREEN + "✔ Process completed successfully!" + Style.RESET_ALL)
+
+        return extractedData
     except Exception as e:
-        print(Fore.RED + f"❌ An error occurred in the main function: {e}" + Style.RESET_ALL)
+        print(Fore.RED + f"✘ An error occurred in the main function: {e}" + Style.RESET_ALL)
 
 if __name__ == "__main__":
-    main()
+    companyName = "Entegris"
+    allPeople = getPeopleFromCompany(companyName)
+    print(allPeople)

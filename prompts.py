@@ -50,19 +50,19 @@ EXTRACTION_PROMPT = r"""
     ---
 
     ### **EXAMPLES TO FOLLOW**  
-    ✅ **Correct Output:**  
+    ✔ **Correct Output:**  
     - `"fullName": "John Doe"` → Found in Markdown  
     - `"position": "Software Engineer"` → Found in Markdown  
     - `"company": "Entegris"` → Found in Markdown  
     - `"linkedin": "https://linkedin.com/in/johndoe"` → Found in Markdown  
     - `"otherUrls": ["https://johndoe.dev"]` → Found in Markdown  
 
-    ❌ **Incorrect Output:**  
-    - `"fullName": "Invented Name"` → ❌ Not found in Markdown  
-    - `"position": "Assumed Role"` → ❌ Not explicitly stated  
-    - `"company": "Assumed Company Name"` → ❌ If missing, return `""`  
-    - `"linkedin": "https://linkedin.com/in/random"` → ❌ If missing, return `""`  
-    - `"otherUrls": ["https://fakewebsite.com"]` → ❌ If missing, return `[]`  
+    ✘ **Incorrect Output:**  
+    - `"fullName": "Invented Name"` → ✘ Not found in Markdown  
+    - `"position": "Assumed Role"` → ✘ Not explicitly stated  
+    - `"company": "Assumed Company Name"` → ✘ If missing, return `""`  
+    - `"linkedin": "https://linkedin.com/in/random"` → ✘ If missing, return `""`  
+    - `"otherUrls": ["https://fakewebsite.com"]` → ✘ If missing, return `[]`  
 
     ---
 
@@ -168,19 +168,19 @@ COMPLETE_PROMPT = r"""
     ---
 
     ### **EXAMPLES TO FOLLOW**  
-    ✅ **Correct Output:**  
+    ✔ **Correct Output:**  
     - `"fullName": "John Doe"` → Found in Markdown  
     - `"position": "Software Engineer"` → Found in Markdown  
     - `"company": "Entegris"` → Found in Markdown  
     - `"linkedin": "https://linkedin.com/in/johndoe"` → Found in Markdown  
     - `"otherUrls": ["https://johndoe.dev"]` → Found in Markdown  
 
-    ❌ **Incorrect Output:**  
-    - `"fullName": "Invented Name"` → ❌ Not found in Markdown  
-    - `"position": "Assumed Role"` → ❌ Not explicitly stated  
-    - `"company": "Assumed Company Name"` → ❌ If missing, return `""`  
-    - `"linkedin": "https://linkedin.com/in/random"` → ❌ If missing, return `""`  
-    - `"otherUrls": ["https://fakewebsite.com"]` → ❌ If missing, return `[]`  
+    ✘ **Incorrect Output:**  
+    - `"fullName": "Invented Name"` → ✘ Not found in Markdown  
+    - `"position": "Assumed Role"` → ✘ Not explicitly stated  
+    - `"company": "Assumed Company Name"` → ✘ If missing, return `""`  
+    - `"linkedin": "https://linkedin.com/in/random"` → ✘ If missing, return `""`  
+    - `"otherUrls": ["https://fakewebsite.com"]` → ✘ If missing, return `[]`  
 
     ---
 

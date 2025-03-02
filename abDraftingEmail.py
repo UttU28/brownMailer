@@ -20,7 +20,7 @@ attachmentFiles = {
 }
 
 if not os.path.exists(tokenFile):
-    print(Fore.RED + "❌ Token file not found. Please run oAuthSetup.py first and then run this script." + Style.RESET_ALL)
+    print(Fore.RED + "✘ Token file not found. Please run oAuthSetup.py first and then run this script." + Style.RESET_ALL)
     exit(1)
     
 def getGmailService():
@@ -28,17 +28,18 @@ def getGmailService():
     try:
         with open(tokenFile, "rb") as token:
             creds = pickle.load(token)
-        print(Fore.GREEN + "✅ Gmail Service Created Successfully" + Style.RESET_ALL)
+        print(Fore.GREEN + "✔ Gmail Service Created Successfully" + Style.RESET_ALL)
         return build("gmail", "v1", credentials=creds)
     except Exception as e:
-        print(Fore.RED + f"❌ Error loading Gmail service: {e}" + Style.RESET_ALL)
+        print(Fore.RED + f"✘ Error loading Gmail service: {e}" + Style.RESET_ALL)
         return None
 
-def createDraft(toEmail, subject, body):
+def createDraft(toEmail, recipientName, companyName, positionTitle, highlightSkills):
     service = getGmailService()
     if not service:
         return None
     
+    subject, body = generateEmail(recipientName, companyName, positionTitle, highlightSkills)
     message = MIMEMultipart()
     message["to"] = toEmail
     message["subject"] = subject
@@ -52,7 +53,7 @@ def createDraft(toEmail, subject, body):
                 encoders.encode_base64(part)
                 part.add_header("Content-Disposition", f"attachment; filename={uploadName}")
                 message.attach(part)
-            print(Fore.GREEN + f"✅ Attachment Added: {uploadName}" + Style.RESET_ALL)
+            print(Fore.GREEN + f"✔ Attachment Added: {uploadName}" + Style.RESET_ALL)
         else:
             print(Fore.YELLOW + f"⚠️ Warning: Attachment Not Found: {filePath}. Skipping." + Style.RESET_ALL)
     
@@ -61,12 +62,18 @@ def createDraft(toEmail, subject, body):
     
     try:
         createdDraft = service.users().drafts().create(userId="me", body=draft).execute()
-        print(Fore.GREEN + f"✅ Draft created successfully! Draft ID: {createdDraft['id']}" + Style.RESET_ALL)
+        print(Fore.GREEN + f"✔ Draft created successfully! Draft ID: {createdDraft['id']}" + Style.RESET_ALL)
         return createdDraft
     except Exception as e:
-        print(Fore.RED + f"❌ Error creating draft: {e}" + Style.RESET_ALL)
+        print(Fore.RED + f"✘ Error creating draft: {e}" + Style.RESET_ALL)
         return None
 
 if __name__ == "__main__":
-    subject, body = generateEmail("Mahesh Bhatt Rec", "Google", "Software Engineer", "Python, Java, C++")
-    createDraft("mahesh@bhattfamily.com", subject, body)
+    # Example usage
+    recipientName = "Mahesh Bhatt"
+    recipientEmail = "mahesh@bhattfamily.com"
+    companyName = "Google"
+    positionTitle = "Software Engineer"
+    highlightSkills = "Python, Java, C++"
+    
+    createDraft(recipientEmail, recipientName, companyName, positionTitle, highlightSkills)
