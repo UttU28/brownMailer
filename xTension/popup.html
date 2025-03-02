@@ -5,9 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>People Finder</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 <body>
     <div class="container">
+        <div class="extension-header">
+            <h1>Brown Mailer</h1>
+        </div>
         <div class="input-container">
             <input type="text" id="companyInput" placeholder="Enter company name">
             <button id="sendRequest">Search</button>
@@ -17,16 +21,8 @@
             <p id="loadingText">Fetching people...</p>
         </div>
         <div id="responseContainer">
+            <h2 id="companyHeader"></h2>
             <table id="resultsTable">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Position</th>
-                        <th>LinkedIn</th>
-                        <th>Email</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
                 <tbody></tbody>
             </table>
         </div>

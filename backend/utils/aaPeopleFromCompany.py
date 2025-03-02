@@ -127,9 +127,9 @@ def getPeopleFromCompany(companyName):
         
         print(Fore.GREEN + "✔ Fetching from SalesQL completed!" + Style.RESET_ALL)
         print(Fore.BLUE + "Saving data to JSON file..." + Style.RESET_ALL)
-        with open(f"data/search_results_{companyName.replace(' ', '_').replace('.', '_')}.json", "w") as file:
-            json.dump(peopleWithEmails, file, indent=4)
-        print(Fore.GREEN + "✔ Data saved to JSON file successfully!" + Style.RESET_ALL)
+        # with open(f"data/search_results_{companyName.replace(' ', '_').replace('.', '_')}.json", "w") as file:
+        #     json.dump(peopleWithEmails, file, indent=4)
+        # print(Fore.GREEN + "✔ Data saved to JSON file successfully!" + Style.RESET_ALL)
         print(Fore.GREEN + "✔ Process completed successfully!" + Style.RESET_ALL)
 
         return peopleWithEmails

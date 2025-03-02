@@ -2,6 +2,10 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import Optional
+import json
+import os
+from datetime import datetime
 
 from utils.aaPeopleFromCompany import getPeopleFromCompany
 from utils.abDraftingEmail import createDraft
@@ -22,15 +26,89 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Cache file path
+CACHE_FILE = "data/company_cache.json"
+
+# Initialize cache file if it doesn't exist
+if not os.path.exists(CACHE_FILE):
+    with open(CACHE_FILE, 'w') as f:
+        json.dump({}, f)
+
+def load_cache():
+    try:
+        with open(CACHE_FILE, 'r') as f:
+            return json.load(f)
+    except:
+        return {}
+
+def save_cache(cache_data):
+    with open(CACHE_FILE, 'w') as f:
+        json.dump(cache_data, f, indent=2)
+
 class CompanyRequest(BaseModel):
     companyName: str
+    position: Optional[str] = None
+    jobId: Optional[str] = None
+
+class EmailRequest(BaseModel):
+    email: str
 
 @app.post("/getPeople")
 async def getPeople(request: CompanyRequest):
     print(f"Fetching people from company: {request.companyName}")
-    people = getPeopleFromCompany(request.companyName)
-    # people = [{"fullName": "Rachel Carey","position": "Talent Acquisition Recruiter","company": "Entegris","linkedin": "https://www.linkedin.com/in/rachel-carey-2a13855b","emails": ["rachel_carey@entegris.com"]},{"fullName": "Jen Hoeptner","position": "Corporate Recruiter","company": "Entegris","linkedin": "https://www.linkedin.com/in/jenhoeptner","emails": ["jhoeptne@its.jnj.com","jen_hoeptner@entegris.com"]},{"fullName": "Taylor Ross Cromwell","position": "Recruiter","company": "Entegris","linkedin": "https://www.linkedin.com/in/taylor-ross-cromwell-9941418b","emails": ["taylor_ross@entegris.com","taylorwinifredross@gmail.com"]},{"fullName": "Tricia A. Pine","position": "Talent Acquisition Recruiter","company": "Entegris","linkedin": "https://www.linkedin.com/in/tricia-a-pine-3836344","emails": ["tricia_pine@entegris.com","tlaw524@aol.com","triciapine1@gmail.com"]},{"fullName": "John Lima","position": "","company": "Entegris","linkedin": "https://www.linkedin.com/in/john-lima-52682540","emails": ["john.lima@entegris.com"]},{"fullName": "Anjuli DiGiuseppe","position": "HR Business Partner","company": "Entegris","linkedin": "https://www.linkedin.com/in/anjuliganguly","emails": ["anjuli_ganguly@entegris.com","anjuli_ganguly@cabotcmp.com","asgee@sfsu.edu"]},{"fullName": "Brannon Gustafson","position": "","company": "Entegris","linkedin": "https://www.linkedin.com/in/brannon-gustafson-936092289","emails": ["brannon_gustafson@entegris.com"]},{"fullName": "David Darnold","position": "Sr Recruiter","company": "Entegris","linkedin": "https://www.linkedin.com/in/daviddarnold","emails": ["david_darnold@entegris.com","ddarnold923@gmail.com"]},{"fullName": "Bob Scanlon","position": "","company": "Entegris","linkedin": "https://www.linkedin.com/in/scanlonbob","emails": ["bob_scanlon@entegris.com","robert.scanlon@kellyengineering.com","bobkaw@gmail.com"]}]
-    return JSONResponse(content={"count": len(people), "data": people})
+    if request.position:
+        print(f"Position: {request.position}")
+    if request.jobId:
+        print(f"Job ID: {request.jobId}")
+    
+    print(request.companyName, request.position, request.jobId)
+
+    # Check cache first
+    cache = load_cache()
+    if request.companyName in cache:
+        print(f"Cache hit for company: {request.companyName}")
+        people = cache[request.companyName]["data"]
+    else:
+        print(f"Cache miss for company: {request.companyName}")
+        # Fetch new data
+        people = getPeopleFromCompany(request.companyName)
+        # Store in cache with timestamp
+        cache[request.companyName] = {
+            "data": people,
+            "timestamp": datetime.now().isoformat()
+        }
+        save_cache(cache)
+
+    return JSONResponse(content={
+        "count": len(people), 
+        "data": people,
+        "metadata": {
+            "company": request.companyName,
+            "position": request.position,
+            "jobId": request.jobId,
+            "cached": request.companyName in cache
+        }
+    })
+
+@app.post("/sendEmail")
+async def sendEmail(request: EmailRequest):
+    try:
+        print(f"Adding email to queue: {request.email}")
+        # Here you would typically call your email drafting function
+        # createDraft(request.email)
+        return JSONResponse(content={
+            "status": "success",
+            "message": "Email added to queue",
+            "email": request.email
+        })
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status": "error",
+                "message": str(e)
+            }
+        )
 
 if __name__ == "__main__":
     import uvicorn

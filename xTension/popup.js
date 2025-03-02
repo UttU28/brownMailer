@@ -5,52 +5,315 @@ document.getElementById("companyInput").addEventListener("keypress", function (e
     }
 });
 
+// Load previous results when popup opens
+document.addEventListener('DOMContentLoaded', loadPreviousResults);
+
+async function loadPreviousResults() {
+    const responseContainer = document.getElementById("responseContainer");
+    const companyHeader = document.getElementById("companyHeader");
+    const inputContainer = document.querySelector('.input-container');
+    const loadingMessage = document.getElementById("loadingMessage");
+    const companyInput = document.getElementById("companyInput");
+
+    try {
+        // Check if we're on a LinkedIn job page
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (tab.url.startsWith('https://www.linkedin.com/jobs/view/')) {
+            // Keep the input container visible
+            inputContainer.style.display = 'flex';
+
+            // Get company name immediately
+            const companyInfo = await chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                func: () => {
+                    const companyElement = document.querySelector('.job-details-jobs-unified-top-card__company-name a');
+                    return companyElement ? companyElement.textContent.trim() : null;
+                }
+            });
+
+            const companyName = companyInfo[0].result;
+            if (companyName) {
+                // Set company name in input field
+                companyInput.value = companyName;
+                
+                // Show loading state with company name immediately
+                companyHeader.innerHTML = `<span class="results-text">Searching:</span> <span class="company-name">${companyName}</span>`;
+                companyHeader.style.display = "block";
+                loadingMessage.style.display = "flex";
+                startLoadingAnimation(companyName);
+            }
+
+            // Auto-trigger search
+            await searchFromJobPage(tab);
+        } else {
+            // Show previous results if they exist
+            const result = await chrome.storage.local.get(['lastSearchResults', 'lastCompanyName']);
+            if (result.lastSearchResults && result.lastSearchResults.length > 0) {
+                responseContainer.style.display = "block";
+                companyInput.value = ""; // Keep input empty when not on LinkedIn jobs page
+                
+                if (result.lastCompanyName) {
+                    companyHeader.innerHTML = `<span class="results-text">Results for:</span> <span class="company-name">${result.lastCompanyName}</span>`;
+                    companyHeader.style.display = "block";
+                } else {
+                    companyHeader.style.display = "none";
+                }
+
+                displayResults(result.lastSearchResults);
+            }
+        }
+    } catch (error) {
+        console.error("Error loading previous results:", error);
+    }
+}
+
+async function searchFromJobPage(tab) {
+    try {
+        // Execute script to get company info from the page
+        const results = await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: () => {
+                const companyElement = document.querySelector('.job-details-jobs-unified-top-card__company-name a');
+                const positionElement = document.querySelector('.job-details-jobs-unified-top-card__job-title h1');
+                const applyButton = document.querySelector('.jobs-apply-button');
+
+                return {
+                    companyName: companyElement ? companyElement.textContent.trim() : null,
+                    position: positionElement ? positionElement.textContent.trim() : '',
+                    jobId: applyButton ? applyButton.getAttribute('data-job-id') : ''
+                };
+            }
+        });
+
+        const { companyName, position, jobId } = results[0].result;
+        if (!companyName) {
+            throw new Error('Could not find company name on the page');
+        }
+
+        // Show loading and company name
+        const loadingMessage = document.getElementById("loadingMessage");
+        const responseContainer = document.getElementById("responseContainer");
+        const companyHeader = document.getElementById("companyHeader");
+        const companyInput = document.getElementById("companyInput");
+
+        // Set company name in input field during loading
+        companyInput.value = companyName;
+        
+        loadingMessage.style.display = "flex";
+        responseContainer.style.display = "none";
+        
+        // Update company header immediately
+        companyHeader.innerHTML = `<span class="results-text">Searching:</span> <span class="company-name">${companyName}</span>`;
+        companyHeader.style.display = "block";
+        
+        // Start loading animation
+        startLoadingAnimation(companyName);
+
+        // Make the API request
+        const response = await fetch('http://localhost:3000/getPeople', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ companyName, position, jobId })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch data');
+        }
+
+        const data = await response.json();
+        await saveToStorage(data.data, companyName);
+        
+        // Update UI
+        companyHeader.innerHTML = `<span class="results-text">Results for:</span> <span class="company-name">${companyName}</span>`;
+        displayResults(data.data);
+        responseContainer.style.display = "block";
+        
+        // Clear input after loading is complete
+        companyInput.value = "";
+
+    } catch (error) {
+        console.error("Error:", error);
+        document.querySelector("#resultsTable tbody").innerHTML = 
+            `<tr><td colspan='4' style='color: red;'>${error.message || 'Failed to fetch data'}</td></tr>`;
+    } finally {
+        stopLoadingAnimation();
+        document.getElementById("loadingMessage").style.display = "none";
+        // Ensure input is cleared in case of error
+        document.getElementById("companyInput").value = "";
+    }
+}
+
+async function saveToStorage(data, companyName) {
+    try {
+        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+            await chrome.storage.local.set({
+                lastSearchResults: data,
+                lastCompanyName: companyName
+            });
+        }
+    } catch (error) {
+        console.error("Error saving to storage:", error);
+    }
+}
+
+function displayResults(data) {
+    const tableBody = document.querySelector("#resultsTable tbody");
+    tableBody.innerHTML = "";
+
+    // Add notification div if it doesn't exist
+    if (!document.querySelector('.notification')) {
+        const notification = document.createElement('div');
+        notification.className = 'notification';
+        document.body.appendChild(notification);
+    }
+
+    if (!data || data.length === 0) {
+        tableBody.innerHTML = "<tr><td colspan='4' style='color: yellow;'>No results found.</td></tr>";
+        return;
+    }
+
+    data.forEach(person => {
+        const firstEmail = person.emails.length > 0 ? person.emails[0] : "No email available";
+        const position = person.position || "No position listed";
+        const linkedinURL = person.linkedin || "#";
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>
+                <a href="${linkedinURL}" target="_blank" class="name-with-linkedin" title="View LinkedIn Profile">
+                    <i class="fab fa-linkedin"></i>
+                    <span class="name-text">${person.fullName}</span>
+                </a>
+            </td>
+            <td class="position">${position}</td>
+            <td>
+                <div class="email-text" title="Click to copy">${firstEmail}</div>
+            </td>
+            <td>
+                <div class="send-btn" data-email="${firstEmail}" title="Send Email">
+                    <i class="fas fa-envelope"></i>
+                </div>
+            </td>
+        `;
+
+        tableBody.appendChild(row);
+    });
+
+    // Add click handlers for email copying
+    document.querySelectorAll(".email-text").forEach(emailDiv => {
+        emailDiv.addEventListener("click", () => {
+            const email = emailDiv.textContent;
+            copyToClipboard(email);
+            showNotification("Email copied to clipboard!");
+        });
+    });
+
+    // Add click handlers for send email buttons
+    document.querySelectorAll(".send-btn").forEach(button => {
+        button.addEventListener("click", async () => {
+            const email = button.getAttribute("data-email");
+            if (email && email !== "No email available") {
+                await sendEmail(email);
+            }
+        });
+    });
+}
+
+function showNotification(message) {
+    const notification = document.querySelector('.notification');
+    notification.textContent = message;
+    notification.style.display = 'block';
+    
+    // Reset animation
+    notification.style.animation = 'none';
+    notification.offsetHeight; // Trigger reflow
+    notification.style.animation = 'fadeInOut 2s ease-in-out';
+
+    // Hide notification after animation
+    setTimeout(() => {
+        notification.style.display = 'none';
+    }, 2000);
+}
+
+function copyToClipboard(text) {
+    const tempInput = document.createElement("input");
+    document.body.appendChild(tempInput);
+    tempInput.value = text;
+    tempInput.select();
+    document.execCommand("copy");
+    document.body.removeChild(tempInput);
+}
+
+// Add loading message cycling
+const loadingMessages = [
+    "🔍 Searching for contacts...",
+    "🌐 Connecting the dots...",
+    "✨ Finding the right people...",
+    "📊 Processing data...",
+    "🎯 Almost there...",
+    "🤝 Getting ready to connect..."
+];
+
+let messageInterval;
+
+function startLoadingAnimation(companyName = '') {
+    const loadingText = document.getElementById("loadingText");
+    let currentIndex = 0;
+
+    // Show company name if provided
+    if (companyName) {
+        const companyHeader = document.getElementById("companyHeader");
+        companyHeader.innerHTML = `<span class="results-text">Searching:</span> <span class="company-name">${companyName}</span>`;
+        companyHeader.style.display = "block";
+    }
+
+    // Initial message
+    loadingText.style.opacity = "0";
+    setTimeout(() => {
+        loadingText.textContent = loadingMessages[0];
+        loadingText.style.opacity = "1";
+    }, 300);
+
+    // Cycle through messages
+    messageInterval = setInterval(() => {
+        loadingText.style.opacity = "0";
+        setTimeout(() => {
+            currentIndex = (currentIndex + 1) % loadingMessages.length;
+            loadingText.textContent = loadingMessages[currentIndex];
+            loadingText.style.opacity = "1";
+        }, 300);
+    }, 2000);
+}
+
+function stopLoadingAnimation() {
+    if (messageInterval) {
+        clearInterval(messageInterval);
+        messageInterval = null;
+    }
+}
+
 async function fetchPeople() {
     const companyName = document.getElementById("companyInput").value.trim();
     const tableBody = document.querySelector("#resultsTable tbody");
     const loadingMessage = document.getElementById("loadingMessage");
-    const loadingText = document.getElementById("loadingText");
     const inputField = document.getElementById("companyInput");
     const searchButton = document.getElementById("sendRequest");
     const responseContainer = document.getElementById("responseContainer");
+    const companyHeader = document.getElementById("companyHeader");
 
     if (!companyName) {
-        tableBody.innerHTML = "<tr><td colspan='5' style='color: red;'>Please enter a company name.</td></tr>";
+        tableBody.innerHTML = "<tr><td colspan='4' style='color: red;'>Please enter a company name.</td></tr>";
+        companyHeader.style.display = "none";
         return;
     }
 
-    // Show loading only while fetching
-    loadingMessage.style.display = "flex";  // Show loader
-    responseContainer.style.display = "none"; // Hide table
-    tableBody.innerHTML = ""; // Clear old results
+    // Show loading and start animation
+    loadingMessage.style.display = "flex";
+    responseContainer.style.display = "none";
+    tableBody.innerHTML = "";
     inputField.disabled = true;
     searchButton.disabled = true;
-
-    // Loading text updates (simulates backend steps)
-    const loadingSteps = [
-        "Fetching people from company: " + companyName,
-        "Performing Google Search...",
-        "✔ Google Search completed successfully!",
-        "Cleaning search results...",
-        "✔ Search results cleaned successfully!",
-        "Converting results to Markdown format...",
-        "✔ Markdown conversion completed!",
-        "Extracting data from Markdown...",
-        "✔ Data extracted successfully!",
-        "Fetching emails from SalesQL...",
-        "✔ Fetching from SalesQL completed!",
-        "Saving data to JSON file...",
-        "✔ Data saved successfully!",
-        "✔ Process completed successfully!"
-    ];
-
-    let stepIndex = 0;
-    const stepInterval = setInterval(() => {
-        if (stepIndex < loadingSteps.length) {
-            loadingText.innerHTML = loadingSteps[stepIndex];
-            stepIndex++;
-        }
-    }, 1000); // Change text every 1 second
+    startLoadingAnimation(companyName);
 
     try {
         const response = await fetch("http://localhost:3000/getPeople", {
@@ -65,63 +328,33 @@ async function fetchPeople() {
 
         const data = await response.json();
 
-        clearInterval(stepInterval); // Stop loading text updates once request is done
-
         if (!data || !data.data || data.data.length === 0) {
-            tableBody.innerHTML = "<tr><td colspan='5' style='color: yellow;'>No results found.</td></tr>";
+            tableBody.innerHTML = "<tr><td colspan='4' style='color: yellow;'>No results found.</td></tr>";
             return;
         }
 
-        // Populate the table
-        data.data.forEach(person => {
-            const firstEmail = person.emails.length > 0 ? person.emails[0] : "No email available";
-            const position = person.position || "No position listed";
-            const linkedinURL = person.linkedin || "#";
-
-            const row = document.createElement("tr");
-            row.innerHTML = `
-                <td>${person.fullName}</td>
-                <td class="position">${position}</td>
-                <td>
-                    <a href="${linkedinURL}" target="_blank">
-                        <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" class="linkedin-icon">
-                    </a>
-                </td>
-                <td>
-                    <button class="copy-btn" data-email="${firstEmail}">Copy</button>
-                </td>
-                <td>
-                    <button class="send-btn" data-email="${firstEmail}">Send Email</button>
-                </td>
-            `;
-
-            tableBody.appendChild(row);
-        });
+        await saveToStorage(data.data, companyName);
+        companyHeader.innerHTML = `<span class="results-text">Results for:</span> <span class="company-name">${companyName}</span>`;
+        companyHeader.style.display = "block";
+        displayResults(data.data);
+        responseContainer.style.display = "block";
 
     } catch (error) {
         console.error("Error:", error);
-        tableBody.innerHTML = "<tr><td colspan='5' style='color: red;'>Failed to fetch data.</td></tr>";
+        tableBody.innerHTML = "<tr><td colspan='4' style='color: red;'>Failed to fetch data.</td></tr>";
+        companyHeader.style.display = "none";
     } finally {
-        clearInterval(stepInterval); // Ensure interval stops
-        loadingMessage.style.display = "none"; // Hide loader
-        responseContainer.style.display = "block"; // Show table
+        stopLoadingAnimation();
+        loadingMessage.style.display = "none";
+        responseContainer.style.display = "block";
         inputField.disabled = false;
         searchButton.disabled = false;
+        // Clear the input field only after loading is complete
+        inputField.value = "";
     }
 }
 
-
-// Function to copy email to clipboard
-function copyToClipboard(text) {
-    const tempInput = document.createElement("input");
-    document.body.appendChild(tempInput);
-    tempInput.value = text;
-    tempInput.select();
-    document.execCommand("copy");
-    document.body.removeChild(tempInput);
-}
-
-// Function to send email via POST request
+// Update the sendEmail function to use notifications instead of alerts
 async function sendEmail(email) {
     try {
         const response = await fetch("http://localhost:3000/sendEmail", {
@@ -130,13 +363,15 @@ async function sendEmail(email) {
             body: JSON.stringify({ email })
         });
 
+        const data = await response.json();
+
         if (response.ok) {
-            alert("Email sent successfully!");
+            showNotification(`Added to email queue: ${email}`);
         } else {
-            alert("Failed to send email.");
+            showNotification(`Failed to queue email: ${data.message || 'Unknown error'}`);
         }
     } catch (error) {
         console.error("Error sending email:", error);
-        alert("Error sending email.");
+        showNotification("Error connecting to email service");
     }
 }
