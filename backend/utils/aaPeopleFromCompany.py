@@ -4,7 +4,7 @@ import requests
 from dotenv import load_dotenv
 import openai
 import re
-from prompts import COMPACT_PROMPT
+from utils.prompts import COMPACT_PROMPT
 import ollama
 import time
 from colorama import Fore, Style
@@ -89,7 +89,7 @@ def getEmailFromSalesQL(linkedinUrl, apiKey):
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException:
-        print(Fore.RED + f"✘ Error fetching email for {linkedinUrl}" + Style.RESET_ALL)
+        # print(Fore.RED + f"✘ Error fetching email for {linkedinUrl}" + Style.RESET_ALL)
         return {"emails": []}
 
 def prioritizeEmails(emails):
@@ -104,32 +104,35 @@ def getPeopleFromCompany(companyName):
     try:
         baseString = f"site:linkedin.com/in \"{companyName}\" (\"Recruiter\" OR \"Talent Acquisition Specialist\" OR \"Hiring Manager\" OR \"HR Business Partner\" OR \"Recruitment Coordinator\")"
         
-        rawResults = googleSearch(baseString, googleApiKey, googleCseId)
+        # rawResults = googleSearch(baseString, googleApiKey, googleCseId)
         # with open("data/raw_results.json", "w") as raw_file:
         #     json.dump(rawResults, raw_file, indent=4)
 
-        # with open("data/raw_results.json", "r") as raw_file:
-        #     rawResults = json.load(raw_file)
+        with open("data/raw_results.json", "r") as raw_file:
+            rawResults = json.load(raw_file)
 
         cleanedResults = cleanResults(rawResults)
         markdownText = convertToMarkdown(cleanedResults)
         extractedData = extractDataFromMarkdown(markdownText)
 
         print(Fore.BLUE + "Fetching emails from SalesQL..." + Style.RESET_ALL)
+        peopleWithEmails = []
         for person in tqdm(extractedData, desc="Processing people", colour="cyan"):
             linkedinUrl = person.get("linkedin", "")
             if linkedinUrl:
                 emails = getEmailFromSalesQL(linkedinUrl, salesqlApiKey)
                 person["emails"] = prioritizeEmails(emails.get("emails", []))
+                if person["emails"]:  # Only keep people with non-empty emails
+                    peopleWithEmails.append(person)
         
         print(Fore.GREEN + "✔ Fetching from SalesQL completed!" + Style.RESET_ALL)
         print(Fore.BLUE + "Saving data to JSON file..." + Style.RESET_ALL)
         with open(f"data/search_results_{companyName.replace(' ', '_').replace('.', '_')}.json", "w") as file:
-            json.dump(extractedData, file, indent=4)
+            json.dump(peopleWithEmails, file, indent=4)
         print(Fore.GREEN + "✔ Data saved to JSON file successfully!" + Style.RESET_ALL)
         print(Fore.GREEN + "✔ Process completed successfully!" + Style.RESET_ALL)
 
-        return extractedData
+        return peopleWithEmails
     except Exception as e:
         print(Fore.RED + f"✘ An error occurred in the main function: {e}" + Style.RESET_ALL)
 

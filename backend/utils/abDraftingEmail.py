@@ -7,7 +7,7 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 from dotenv import load_dotenv
-from emailTemplate import generateEmail
+from utils.emailTemplate import generateEmail
 from colorama import Fore, Style
 
 load_dotenv()

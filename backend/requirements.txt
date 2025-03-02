@@ -2,21 +2,18 @@
 
 
 colorama
+tqdm
 requests
-pandas
-openpyxl
+python-dotenv
+
 ollama
 openai==0.28
-dotenv
-selenium
-webdriver-manager
-python-dotenv
+
 google-api-python-client
 google-auth
 google-auth-oauthlib
 google-auth-httplib2
-tqdm
-email
-base64
-pickle
-re
+
+fastapi
+uvicorn
+fastapi[all]
