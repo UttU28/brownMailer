@@ -142,9 +142,13 @@ def getPeopleFromCompany(companyName):
         for person in peopleWithEmails:
             matchingEmails = [email for email in person["emails"] 
                             if any(email.endswith("@" + domain) for domain in matchingDomains)]
+            personCopy = person.copy()
             if matchingEmails:
-                personCopy = person.copy()
                 personCopy["emails"] = matchingEmails
+            else:
+                # If no matching emails found, use the first email in the list
+                personCopy["emails"] = [person["emails"][0]] if person["emails"] else []
+            if personCopy["emails"]:  # Only append if there are any emails
                 filteredPeople.append(personCopy)
         
         peopleWithEmails = filteredPeople
