@@ -1,6 +1,6 @@
 # Brown Mailer: coz I'm not Black. Mailing you!
 
-## ![Brown Mailer Icon](xTension/icon128.png)  Not Required Words of Wisdom 🤔
+## ![Brown Mailer Icon](xTension/icons/icon128.png)  Not Required Words of Wisdom 🤔
 If recruiters can automate rejection emails, why can’t we automate hope? Or is this just a simulation, and we’re all bots in someone else’s Chrome extension? 🤖 Lets spam the spammers. GG Boys.
 
 ---
@@ -65,7 +65,7 @@ It's time to **fight back**. Instead of waiting for them to send us rejection em
 🛠 **Chrome Extension API** → Handles scraping & UI interactions.  
 🚀 **FastAPI** → Powers backend requests.  
 🧠 **Ollama (LLM) or ChatGPT API** → Extracts skills & crafts smart emails.  
-![Brown Mailer Icon](xTension/icon16.png)  **Gmail API** → Sends emails from your personal email account.  
+![Brown Mailer Icon](xTension/icons/icon16.png)  **Gmail API** → Sends emails from your personal email account.  
 🔎 **Google Search API** → Finds recruiter contacts. 
 📧 **SalesQL (or alternatives)** → Retrieves recruiter emails. 
 🔍 **BeautifulSoup** → Parses job descriptions cleanly.  
@@ -82,7 +82,7 @@ To **obliterate** manual LinkedIn searches, **eliminate** time-wasting recruiter
 💡 **Boosts engagement** → AI-powered emails stand out.  
 🔍 **Filters noise** → Only **relevant skills** are extracted.  
 🎯 **Works even outside LinkedIn** → Manual search mode included.  
-![Brown Mailer Icon](xTension/icon16.png)  **Emails recruiters directly from your inbox** → No manual copy-pasting.  
+![Brown Mailer Icon](xTension/icons/icon16.png)  **Emails recruiters directly from your inbox** → No manual copy-pasting.  
 🤖 **Flexible AI Choices** → Use **Ollama locally** or **ChatGPT API** if you don’t have a beefy system.  
 
 🚀 **Get started. Automate. Dominate.** 🚀

@@ -1,4 +1,4 @@
-# ![Brown Mailer Icon](xTension/icon48.png)  Brown Mailer Chrome Extension - Step 2: You Actually Made It!
+# ![Brown Mailer Icon](xTension/icons/icon48.png)  Brown Mailer Chrome Extension - Step 2: You Actually Made It!
 
 ## 🎉 Congratulations, You Survived Step 1!
 

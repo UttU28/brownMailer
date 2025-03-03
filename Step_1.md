@@ -1,4 +1,4 @@
-# ![Brown Mailer Icon](xTension/icon48.png)  Brown Mailer: Backend - Step 1: Welcome to Hell 🔥
+# ![Brown Mailer Icon](xTension/icons/icon48.png)  Brown Mailer: Backend - Step 1: Welcome to Hell 🔥
 
 ## 🎉 Congrats, You Actually Read the Instructions!
 
