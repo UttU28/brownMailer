@@ -1,17 +1,17 @@
 # Brown Mailer: The Job Hunt Automation You Deserve
-(coz I'm not black, but I'm efficient.)
+
 
 ## Overview 🚀
 
-Sick of automated rejection emails? Wish you could flip the script and send some strategic, well-crafted cold emails to recruiters instead? **Brown Mailer** is your secret weapon for automating recruiter outreach, fetching contact details, and making your job hunt a breeze.
+Are you tired of automated rejection emails? Ever wish you could send a few automated emails yourself? Well, now you can! **Brown Mailer** is here to help you scrape recruiter emails, extract their details, and send them beautifully crafted emails (with your resume and cover letter attached, of course).
 
 ## What This Does 🤖
 
-- **Finds recruiters, HRs, and hiring managers** from specific companies using **Google Custom Search API**.
-- **Scrapes LinkedIn profiles** to extract names, positions, and companies via **Llama3.2 via Ollama** (or OpenAI if you fancy).
-- **Fetches real, professional emails** using **SalesQL API**, so you’re not guessing addresses.
-- **Generates and sends hyper-personalized emails** via **Gmail API**, avoiding spam filters.
-- **Supports multiple email templates**, keeping your messages fresh and engaging.
+- **Searches for recruiters, HRs, and hiring managers** at a specific company using **Google Custom Search API**.
+- **Scrapes LinkedIn profiles** and extracts names, positions, and company details using **Llama3.2 via Ollama** (or OpenAI if you prefer).
+- **Fetches professional email addresses** using **SalesQL API** so you don’t have to guess them.
+- **Generates and sends personalized emails** using **Gmail API**, ensuring each email is unique and **does NOT land in spam**.
+- **Supports multiple email templates**, so recruiters don’t think you’re a robot (even though... you kind of are, but let’s keep that a secret). 😉
 
 ---
 
@@ -19,26 +19,28 @@ Sick of automated rejection emails? Wish you could flip the script and send some
 
 ### 1️⃣ Google Custom Search API (Finding Recruiters)
 
-1. Create a Custom Search Engine (CSE) at [Google Programmable Search Engine](https://programmablesearchengine.google.com/controlpanel/all).
-2. Set it to search **LinkedIn profiles only** (`site:linkedin.com/in`).
-3. Copy the **CSE ID** and save it in your `.env` as `GOOGLE_CSE_ID`.
-4. Head to **Google Cloud Console → APIs & Services → Credentials**.
-5. Generate an **API key** and save it as `GOOGLE_API_KEY`.
+1. Go to [Google Programmable Search Engine](https://programmablesearchengine.google.com/controlpanel/all) and **create a Custom Search Engine (CSE)**.
+2. **Set it to search LinkedIn profiles only** (use the site filter `site:linkedin.com/in`).
+3. Copy the **CSE ID** and save it as `GOOGLE_CSE_ID` in your `.env` file.
+4. Go to **Google Cloud Console → APIs & Services → Credentials**.
+5. **Create an API key**, then copy and save it as `GOOGLE_API_KEY` in your `.env` file.
 
 ### 2️⃣ SalesQL API (Fetching Emails)
 
-1. Sign up at [SalesQL](https://salesql.com/) and get an **API key**.
-2. Save it as `SALESQL_API_KEY` in your `.env`.
+1. Create an account at [SalesQL](https://salesql.com/) and get an **API key**.
+2. Save it as `SALESQL_API_KEY` in your `.env` file.
 
 ### 3️⃣ Gmail API (Automated Emails)
 
-1. Enable the **Gmail API** via [Google Cloud Console](https://console.cloud.google.com/).
-2. Navigate to **APIs & Services → Credentials → Create OAuth Client ID** (choose Desktop App).
-3. Download `credentials.json` and place it in `tokens/`.
-4. Add your email to the **OAuth consent screen** under **Test users**.
-5. Run `oAuthSetup.py` to generate your `token.pickle`.
+1. Enable the **Gmail API** in [Google Cloud Console](https://console.cloud.google.com/).
+2. Go to **APIs & Services → Credentials → Create OAuth Client ID** (choose Desktop App).
+3. Download the `credentials.json` file and place it in the `tokens/` folder.
+4. Go to **OAuth consent screen → Test users** and add your email.
+5. Run `oAuthSetup.py` to generate your `token.pickle` file.
 
 ### 4️⃣ Install Dependencies
+
+Run:
 
 ```sh
 pip install -r requirements.txt
@@ -46,59 +48,30 @@ pip install -r requirements.txt
 
 ---
 
-## How It Works ⚡
-
-### **Backend (FastAPI Server - `app.py`)**
-
-The **FastAPI** server powers our recruiter-fetching mechanism. It’s got:
-
-- **CORS enabled** (so frontend apps can interact without drama).
-- A **`/getPeople` endpoint** that:
-  - Takes a `companyName` as input.
-  - Calls `getPeopleFromCompany()` to fetch recruiters from Google Search.
-  - Returns recruiter details in JSON format.
-
-#### **Run the server:**
-```sh
-uvicorn app:app --host 0.0.0.0 --port 3000 --reload
-```
-
-You can then hit the endpoint:
-```sh
-POST http://localhost:3000/getPeople
-{
-    "companyName": "Google"
-}
-```
-
-And get back a structured list of recruiters from **Google** (or any company you specify).
-
----
-
 ## Usage ⚡
 
-1. **Personalize your email templates** in `emailTemplates.py`.
-2. **Fire up the system:**
+1. Edit `emailTemplates.py` to personalize your email templates.
+2. Run the main script:
 
 ```sh
-python app.py
+python main.py
 ```
 
-3. Let the recruiters **taste their own medicine** (automated emails, but from you!).
+3. Sit back and let the recruiters get a taste of their own medicine (automated emails, but from YOU!).
 
 ---
 
 ## Notes & Warnings ⚠️
 
-- **Don't abuse it!** Sending too many emails too quickly might get your Gmail flagged.
-- **Personalize emails** to avoid looking spammy.
-- **Never share API keys**—unless you enjoy random people sending emails on your behalf.
+- **DO NOT SPAM.** Sending too many emails in a short time may flag your account.
+- **Make sure to personalize your emails** to avoid looking like a bot.
+- **DO NOT SHARE your API keys or credentials**. Seriously, don’t.
 
 ---
 
-## Final Words of Wisdom ✨
+## Words of Wisdom ✨
 
-> "If recruiters can automate rejections, you can automate applications. Balance the equation." – ThatInsaneGuy || UttU28
+> "If recruiters can automate rejection emails, you can automate job applications. Balance the equation." – ThatInsaneGuy || UttU28
 
-Go get that dream job, legend! 🚀
+Now go forth and land that dream job! 🚀
 
