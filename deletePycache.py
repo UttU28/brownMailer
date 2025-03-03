@@ -1,9 +1,25 @@
+# deletePycache.py
+
 import os
 import shutil
 from tqdm import tqdm
 from colorama import Fore, Style
 
 def deletePycache(rootDir="."):
+    """
+    Thank me later.
+    Delete all __pycache__ directories and their contents recursively starting from the root directory.
+    
+    __pycache__ directories contain compiled Python bytecode (.pyc files) that Python creates
+    to optimize import speed. While useful during runtime, these can:
+    - Take up unnecessary disk space
+    - Cause version conflicts between Python versions
+    - Lead to stale bytecode if source files are modified
+    - Create unnecessary files in version control
+    
+    Args:
+        rootDir (str): The root directory to start searching from. Defaults to current directory.
+    """
     pycacheDirs = []
     
     for dirpath, dirnames, _ in os.walk(rootDir):

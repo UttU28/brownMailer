@@ -15,6 +15,19 @@ body {
     border-bottom: 2px solid #444;
 }
 
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.header-icon {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+}
+
 .extension-header h1 {
     margin: 0;
     color: #007bff;
@@ -283,4 +296,16 @@ tbody tr:hover {
 .linkedin-icon,
 .linkedin-icon:hover {
     color: inherit;
+}
+
+.error-message {
+    color: red;
+    text-align: center;
+    padding: 10px;
+}
+
+.no-results {
+    color: #ffd700;
+    text-align: center;
+    padding: 10px;
 }

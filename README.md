@@ -1,15 +1,22 @@
-# 📨 Brown Mailer: coz im not Black. Mailing you!  
-  
+# Brown Mailer: coz I'm not Black. Mailing you!
 
-## 🚀 The Ultimate AI-Powered Cold Emailer ||--> Chrome Extension + AI-Powered Backend Project 
-
-Welcome to **the most absurdly efficient, LLM-enhanced Chrome extension + backend duo** you've ever seen! This project seamlessly scrapes LinkedIn job pages, hunts for recruiters, verifies technical skills, and crafts killer emails. Say goodbye to hours of job-hunting drudgery and hello to **automation supremacy**. 
+## ![Brown Mailer Icon](xTension/icon128.png)  Not Required Words of Wisdom 🤔
+If recruiters can automate rejection emails, why can’t we automate hope? Or is this just a simulation, and we’re all bots in someone else’s Chrome extension? 🤖 Lets spam the spammers. GG Boys.
 
 ---
-## 🤬 WHY I BUILT THIS
-I am **sick and tired** of recruiters **rejecting my job applications** without even **reading them**. These HR people have fancy bots and automated scripts to **reject us instantly**—so why not hit them back with **our own automation**? 
 
-It's time to **fight back**. Instead of waiting for them to send us rejection emails, we’ll **spam them all day, all night** asking for a job until they **reply or block us**. Either way, you weren’t getting the job in the first place—so **who cares?** At least now they’ll be afraid of **us** for once. 
+## 🚀 The Ultimate AI-Powered Cold Emailer ||--> Chrome Extension + AI-Powered Backend Project
+
+Welcome to **the most absurdly efficient, LLM-enhanced Chrome extension + backend duo** you've ever seen! This project seamlessly scrapes LinkedIn job pages, hunts for recruiters, verifies technical skills, and crafts killer emails. Say goodbye to hours of job-hunting drudgery and hello to **automation supremacy**.
+
+---
+
+## 🤬 WHY I BUILT THIS
+
+I am **sick and tired** of recruiters **rejecting my job applications** without even **reading them**. These HR people have fancy bots and automated scripts to **reject us instantly**—so why not hit them back with **our own automation**?
+
+It's time to **fight back**. Instead of waiting for them to send us rejection emails, we’ll **spam them all day, all night** asking for a job until they **reply or block us**. Either way, you weren’t getting the job in the first place—so **who cares?** At least now they’ll be afraid of **us** for once.
+
 
 ---
 ## 🎯 What This Does
@@ -58,7 +65,7 @@ It's time to **fight back**. Instead of waiting for them to send us rejection em
 🛠 **Chrome Extension API** → Handles scraping & UI interactions.  
 🚀 **FastAPI** → Powers backend requests.  
 🧠 **Ollama (LLM) or ChatGPT API** → Extracts skills & crafts smart emails.  
-📨 **Gmail API** → Sends emails from your personal email account.  
+![Brown Mailer Icon](xTension/icon16.png)  **Gmail API** → Sends emails from your personal email account.  
 🔎 **Google Search API** → Finds recruiter contacts. 
 📧 **SalesQL (or alternatives)** → Retrieves recruiter emails. 
 🔍 **BeautifulSoup** → Parses job descriptions cleanly.  
@@ -75,7 +82,7 @@ To **obliterate** manual LinkedIn searches, **eliminate** time-wasting recruiter
 💡 **Boosts engagement** → AI-powered emails stand out.  
 🔍 **Filters noise** → Only **relevant skills** are extracted.  
 🎯 **Works even outside LinkedIn** → Manual search mode included.  
-📨 **Emails recruiters directly from your inbox** → No manual copy-pasting.  
+![Brown Mailer Icon](xTension/icon16.png)  **Emails recruiters directly from your inbox** → No manual copy-pasting.  
 🤖 **Flexible AI Choices** → Use **Ollama locally** or **ChatGPT API** if you don’t have a beefy system.  
 
 🚀 **Get started. Automate. Dominate.** 🚀

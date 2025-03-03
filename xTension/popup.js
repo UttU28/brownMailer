@@ -1,3 +1,6 @@
+// Base URL for API calls
+const BASE_URL = 'http://localhost:3000';
+
 document.getElementById("sendRequest").addEventListener("click", fetchPeople);
 document.getElementById("companyInput").addEventListener("keypress", function (event) {
     if (event.key === "Enter") {
@@ -112,7 +115,7 @@ async function searchFromJobPage(tab) {
         startLoadingAnimation(companyName);
 
         // Make the API request with job description HTML
-        const response = await fetch('http://localhost:3000/getPeople', {
+        const response = await fetch(`${BASE_URL}/getPeople`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
@@ -140,8 +143,14 @@ async function searchFromJobPage(tab) {
 
     } catch (error) {
         console.error("Error:", error);
-        document.querySelector("#resultsTable tbody").innerHTML = 
-            `<tr><td colspan='4' style='color: red;'>${error.message || 'Failed to fetch data'}</td></tr>`;
+        const errorRow = document.createElement('tr');
+        const errorCell = document.createElement('td');
+        errorCell.setAttribute('colspan', '4');
+        errorCell.className = 'error-message';
+        errorCell.textContent = error.message || 'Failed to fetch data';
+        errorRow.appendChild(errorCell);
+        document.querySelector("#resultsTable tbody").innerHTML = '';
+        document.querySelector("#resultsTable tbody").appendChild(errorRow);
     } finally {
         stopLoadingAnimation();
         document.getElementById("loadingMessage").style.display = "none";
@@ -174,7 +183,13 @@ function displayResults(data) {
     }
 
     if (!data || data.length === 0) {
-        tableBody.innerHTML = "<tr><td colspan='4' style='color: yellow;'>No results found.</td></tr>";
+        const noResultsRow = document.createElement('tr');
+        const noResultsCell = document.createElement('td');
+        noResultsCell.setAttribute('colspan', '4');
+        noResultsCell.className = 'no-results';
+        noResultsCell.textContent = 'No results found.';
+        noResultsRow.appendChild(noResultsCell);
+        tableBody.appendChild(noResultsRow);
         return;
     }
 
@@ -348,7 +363,7 @@ async function fetchPeople() {
     startLoadingAnimation(companyName);
 
     try {
-        const response = await fetch("http://localhost:3000/getPeople", {
+        const response = await fetch(`${BASE_URL}/getPeople`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ companyName })
@@ -428,7 +443,7 @@ async function sendEmail(email, name, jobInfo = null) {
             notificationMessage += `\nPosition: ${jobInfo.position}`;
         }
 
-        const response = await fetch("http://localhost:3000/sendEmail", {
+        const response = await fetch(`${BASE_URL}/sendEmail`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
