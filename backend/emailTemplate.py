@@ -1,16 +1,25 @@
 import random
+import os
+from dotenv import load_dotenv
 
-NAME = "Utsav Chaudhary"
-LINKEDIN_URL = "https://linkedin.com/in/utsavmaan28/"
-LINKEDIN_URL_VIEW = "linkedin.com/in/utsavmaan28/"
-PHONE_NUMBER = "+1(607)296-9583"
+load_dotenv()
+
+FULL_NAME = os.getenv("FULL_NAME")                          # Update this in .env file
+PHONE_NUMBER = os.getenv("PHONE_NUMBER")                    # Update this in .env file
+LINKEDIN_URL = "https://www.linkedin.com/in/utsavmaan28/" 
+LINKEDIN_URL_VIEW = "linkedin.com/in/utsavmaan28/"          # This is the URL that will be shown in the email, trimming it down.
 GITHUB_URL = "https://github.com/UttU28"
-GITHUB_URL_VIEW = "github.com/UttU28"
+GITHUB_URL_VIEW = "github.com/UttU28"                       # This is the URL that will be shown in the email, trimming it down.
 PORTFOLIO_URL = "https://thatinsaneguy28.netlify.app"
-PORTFOLIO_URL_VIEW = "thatinsaneguy28.netlify.app"
+PORTFOLIO_URL_VIEW = "thatinsaneguy28.netlify.app"          # This is the URL that will be shown in the email, trimming it down.
 
-SUBJECT_TEMPLATE = "Hello from {yourName} – Interested in {positionTitle}"
+# Add more email subject templates in the array below.
+SUBJECT_TEMPLATE = [
+    "Hello from {yourName} – Interested in {positionTitle}", 
+    "Application for {positionTitle} – {yourName}"
+]
 
+# Add more email body templates in the array below.
 BODY_TEMPLATES = [
     """
     <html>
@@ -112,13 +121,13 @@ BODY_TEMPLATES = [
 
 
 def generateEmail(recipient_name, company_name, position_title, highlight_skills):
-    subject = SUBJECT_TEMPLATE.format(yourName=NAME, positionTitle=position_title)
+    subject = SUBJECT_TEMPLATE[random.randint(0, len(SUBJECT_TEMPLATE) - 1)].format(yourName=FULL_NAME, positionTitle=position_title)
     body = BODY_TEMPLATES[random.randint(0, len(BODY_TEMPLATES) - 1)].format(
         recipientName=recipient_name,
         companyName=company_name,
         positionTitle=position_title,
         highlightSkills=highlight_skills,
-        yourName=NAME,
+        yourName=FULL_NAME,
         linkedinUrl=LINKEDIN_URL,
         linkedinUrlView=LINKEDIN_URL_VIEW,
         phoneNumber=PHONE_NUMBER,

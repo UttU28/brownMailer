@@ -51,7 +51,7 @@ If this part confused you, go back and actually read the docs. We’re not doing
 
 Follow the steps in `backend ↷ _knowledgeBase ↷ gmailAPI.md` to enable **Gmail API** and obtain the necessary credentials.
 
-When downloading the **credentials.json** file, **rename it properly as ********************`credentials.json`******************** and save it in the ********************`tokens/`******************** directory**. The script is expecting it there, so don’t get creative.
+When downloading the **credentials.json** file, **rename it properly as `credentials.json`** and save it in the **`tokens/`** directory. The script is expecting it there, so don’t get creative.
 
 Add these to your `.env` file:
 
@@ -73,35 +73,57 @@ This will prompt you to log in to your **primary Gmail account** (aka the one th
 
 ---
 
-### 4️⃣ Set Up SalesQL & OpenAI API (Optional, But Smart)
+### 4️⃣ Set Up SalesQL API (For Fetching Recruiter Emails, Required)
 
-1. **SalesQL API Key** (for fetching recruiter emails, required):
-
+1. **SalesQL API Key:**
    - Create an account at [SalesQL](https://salesql.com/) and get an API key.
    - Add it to your `.env` file:
 
    ```sh
    SALESQL_API_KEY=salesql_api_key
    ```
-
    - You can also use alternative email-finding services if needed.
-
-2. **OpenAI API Key** (optional, if using OpenAI instead of Ollama for AI tasks):
-
-   - Get your API key from [OpenAI](https://platform.openai.com/) (only required if you’re not using Ollama).
-   - Add it to your `.env` file:
-
-   ```sh
-   OPENAI_API_KEY=openai_api_key
-   ```
-
-   - If you’re using **Ollama**, ignore this. You’re already ahead of the game.
 
 ---
 
-### 5️⃣ Save Your Resume & Cover Letter (Yes, They’re Required)
+### 5️⃣ Choose Your AI Setup: ChatGPT API (Easy, but Expensive) or Ollama (Pro Mode, Free & Secure)
 
-Rename your **resume** and **cover letter** as `resume.pdf` and `coverLetter.pdf` (capitalization matters!) and **save them in the ********************`data/`******************** directory** in the backend.
+#### Option 1: Use OpenAI's ChatGPT API (Easy, but Costs Money 💸)
+
+- Get your API key from [OpenAI](https://platform.openai.com/).
+- Add it to your `.env` file:
+
+```sh
+OPENAI_API_KEY=openai_api_key
+```
+
+- This option is **easy but paid**—you clearly have a lot of money to burn. 
+
+#### Option 2: Install Ollama & Use LLaMA 3.2 Locally (Pro Mode, Free & Secure 🏆)
+
+- **Why use this?** It’s **free, secure, and runs on your machine**, though slightly slower depending on your hardware. But hey, **real pros** don’t rely on cloud APIs.
+- Install **Ollama**:
+
+```sh
+curl -fsSL https://ollama.ai/install.sh | sh  # For Mac/Linux
+winget install Ollama  # For Windows
+```
+
+- Download LLaMA 3.2 model:
+
+```sh
+ollama pull llama3.2
+```
+
+- Now, Ollama will handle AI tasks **locally**, without needing an external API.
+
+If you’re using **Ollama**, congrats—you just unlocked **pro mode** and don’t have to worry about OpenAI billing surprises.
+
+---
+
+### 6️⃣ Save Your Resume & Cover Letter (Yes, They’re Required)
+
+Rename your **resume** and **cover letter** as `resume.pdf` and `coverLetter.pdf` (capitalization matters!) and **save them in the `data/` directory** in the backend.
 
 Why? Because this script will automatically:
 
@@ -113,7 +135,7 @@ It’s almost like having an assistant, except it won’t call in sick.
 
 ---
 
-### 6️⃣ Run the Backend Server (So Stuff Actually Works)
+### 7️⃣ Run the Backend Server (So Stuff Actually Works)
 
 Once everything is set up, start the backend server:
 
@@ -129,10 +151,7 @@ If this doesn’t work, check your setup **before** blaming me.
 
 ## 🚀 Now What?
 
-1. Open the Chrome extension and enter a company name (if not on a LinkedIn job page).
-2. Let the extension **track down recruiters** like a job-hunting bounty hunter.
-3. Click **Send Email** and let AI craft a **tailored** job application.
-4. Wait for responses… or blocks. Either way, you made an impression.
+There is a Step 2, and you need to finish that first. Go to Step 2 and complete it before moving forward.
 
 ---
 
@@ -144,5 +163,5 @@ If this doesn’t work, check your setup **before** blaming me.
 
 ---
 
-
 ## 🚨 THERE IS A STEP 2, YOU SON OF YOUR MOTHER.
+

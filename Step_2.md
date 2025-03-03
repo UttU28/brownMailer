@@ -62,3 +62,4 @@ If you need to tweak API permissions or run the backend on your **own cloud serv
 ## 🎯 Get Started
 
 🚀 Install the extension, let AI work its magic, and make recruiters notice you (or at least confuse them). Happy job hunting! 🚀
+

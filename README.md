@@ -85,5 +85,60 @@ To **obliterate** manual LinkedIn searches, **eliminate** time-wasting recruiter
 ![Brown Mailer Icon](xTension/icons/icon16.png)  **Emails recruiters directly from your inbox** → No manual copy-pasting.  
 🤖 **Flexible AI Choices** → Use **Ollama locally** or **ChatGPT API** if you don’t have a beefy system.  
 
-🚀 **Get started. Automate. Dominate.** 🚀
 
+
+## **📨 Generate More Email Templates Using ChatGPT**
+
+### 🔥 Need More Variations? Customize Your Emails!
+Use the prompt below in **ChatGPT** to create more **personalized email templates**.
+
+**📋 Copy-Paste This Prompt:**
+📩 Prompt:
+
+```
+"Generate a variation of a professional job application email template that maintains the following placeholders for dynamic input: `{recipientName}`, `{companyName}`, `{positionTitle}`, `{highlightSkills}`, `{linkedinUrl}`, `{linkedinUrlView}`, `{githubUrl}`, `{githubUrlView}`, `{portfolioUrl}`, `{portfolioUrlView}`, `{yourName}`, and `{phoneNumber}`.
+
+The email should:
+Be engaging, professional, and personalized for recruiter outreach.
+Maintain HTML formatting for easy copy-pasting into email clients.
+Include polished structure and readability while keeping placeholders consistent.
+Offer a variation in tone and flow while keeping the same key elements (greeting, introduction, application mention, skills highlight, contact details, and links).
+
+Provide the output in a ready-to-use HTML file format to ensure easy integration into automated email systems or personal email clients."
+---
+
+Now, here's a **variation of your email template** in an HTML file format:  
+
+
+'''html
+<!DOCTYPE html>
+<html>
+   <body>
+      <p>Dear {recipientName},</p>
+      
+      <p>I hope you’re having a great day. I recently came across your profile on LinkedIn and saw that you’re part of the recruitment team at <strong>{companyName}</strong>. I wanted to reach out personally regarding my application for the <strong>{positionTitle}</strong> position.</p>
+      
+      <p>With a strong background in <strong>{highlightSkills}</strong>, I believe my expertise aligns well with the needs of your team at <strong>{companyName}</strong>. I’d love the opportunity to discuss how my experience could contribute to your company’s success.</p>
+      
+      <p>For your reference, I’ve attached my resume and cover letter. Additionally, you can explore my work through the following links:</p>
+      <ul>
+            <li><strong>LinkedIn:</strong> <a href="{linkedinUrl}" target="_blank">{linkedinUrlView}</a></li>
+            <li><strong>GitHub:</strong> <a href="{githubUrl}" target="_blank">{githubUrlView}</a></li>
+            <li><strong>Portfolio:</strong> <a href="{portfolioUrl}" target="_blank">{portfolioUrlView}</a></li>
+      </ul>
+      
+      <p>I’d appreciate the opportunity to connect and discuss this further. Let me know a convenient time for a quick chat.</p>
+      
+      <p>Looking forward to your response.</p>
+      
+      <p><strong>Best Regards,<br>
+      {yourName}</strong><br>
+      {phoneNumber}</p>
+   </body>
+</html>
+'''  
+
+```
+
+
+# 🚀 **Get started. Automate. Dominate.** 🚀

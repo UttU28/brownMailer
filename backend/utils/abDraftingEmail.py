@@ -7,12 +7,12 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 from dotenv import load_dotenv
-from utils.emailTemplate import generateEmail
+from emailTemplate import generateEmail
 from colorama import Fore, Style
 
 load_dotenv()
 
-fullName = "Utsav Chaudhary"
+fullName = os.getenv("FULL_NAME")
 tokenFile = os.getenv("GMAIL_TOKEN_FILE")
 attachmentFiles = {
     "data/resume.pdf": f"{fullName} Resume.pdf",
