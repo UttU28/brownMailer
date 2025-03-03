@@ -230,11 +230,15 @@ tbody tr:hover {
     right: 20px;
     background-color: rgba(40, 167, 69, 0.9);
     color: white;
-    padding: 10px 20px;
+    padding: 15px 20px;
     border-radius: 4px;
     display: none;
     animation: fadeInOut 2s ease-in-out;
     z-index: 1000;
+    white-space: pre-line;
+    max-width: 300px;
+    line-height: 1.4;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 @keyframes fadeInOut {

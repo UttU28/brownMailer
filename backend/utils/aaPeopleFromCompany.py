@@ -2,11 +2,13 @@ import os
 import json
 import requests
 from dotenv import load_dotenv
-import openai
 import re
-try: from utils.prompts import MKD_SYSTEM_PROMPT, MKD_COMPACT_PROMPT, EML_SYSTEM_PROMPT, EML_USER_PROMPT
-except: from prompts import MKD_SYSTEM_PROMPT, MKD_COMPACT_PROMPT, EML_SYSTEM_PROMPT, EML_USER_PROMPT
-import ollama
+try: 
+    from utils.prompts import MKD_SYSTEM_PROMPT, MKD_COMPACT_PROMPT, EML_SYSTEM_PROMPT, EML_USER_PROMPT
+    from utils.llms import callOllama
+except: 
+    from prompts import MKD_SYSTEM_PROMPT, MKD_COMPACT_PROMPT, EML_SYSTEM_PROMPT, EML_USER_PROMPT
+    from llms import callOllama
 import time
 from colorama import Fore, Style
 from tqdm import tqdm
@@ -14,12 +16,11 @@ from tqdm import tqdm
 # Load environment variables from .env file
 load_dotenv()
 
-openAiApiKey = os.getenv('OPENAI_API_KEY')
 googleApiKey = os.getenv("GOOGLE_API_KEY")
 googleCseId = os.getenv("GOOGLE_CSE_ID")
 salesqlApiKey = os.getenv("SALESQL_API_KEY")
 
-if not openAiApiKey or not googleApiKey or not googleCseId or not salesqlApiKey:
+if not googleApiKey or not googleCseId or not salesqlApiKey:
     raise Exception("Missing API keys in the environment variables.")
 
 def googleSearch(query, apiKey, cseId):
@@ -53,22 +54,6 @@ def convertToMarkdown(cleanedResults):
     ])
     print(Fore.GREEN + "✔ Markdown conversion completed!" + Style.RESET_ALL)
     return markdown
-
-def callOllama(sysPrompt, userPrompt):
-    response = ollama.chat(
-        model='llama3.2', 
-        messages=[
-            {"role": "system", "content": sysPrompt},
-            {"role": "user", "content": userPrompt}
-        ],
-        options={
-            "temperature": 0.0,
-            "top_p": 1.0,
-            "frequency_penalty": 0.0,
-            "presence_penalty": 0.0
-        }
-    )
-    return response['message']['content'].strip()
 
 def extractDataFromMarkdown(markdownText):
     try:
@@ -106,11 +91,11 @@ def prioritizeEmails(emails):
 
 def getPeopleFromCompany(companyName):
     try:
-        baseString = f"site:linkedin.com/in \"{companyName}\" (\"Recruiter\" OR \"Talent Acquisition Specialist\" OR \"Hiring Manager\" OR \"HR Business Partner\" OR \"Recruitment Coordinator\")"
+        baseString = f"site:linkedin.com/in \"{companyName}\" (\"Recruiter\" OR \"Talent Acquisition Specialist\" OR \"Hiring Manager\" OR \"HR Business Partner\" OR \"Recruitment Coordinator\") -intitle:\"profiles\" -inurl:\"dir/\" \"Recruiter\" OR \"Talent Acquisition Specialist\" OR \"Hiring Manager\" OR \"HR Business Partner\" OR \"Recruitment Coordinator\""
         
         rawResults = googleSearch(baseString, googleApiKey, googleCseId)
-        # with open("../data/raw_results.json", "w") as raw_file:
-        #     json.dump(rawResults, raw_file, indent=4)
+        with open("data/raw_results.json", "w") as raw_file:
+            json.dump(rawResults, raw_file, indent=4)
 
         # with open("../data/raw_results.json", "r") as raw_file:
         #     rawResults = json.load(raw_file)
@@ -129,8 +114,13 @@ def getPeopleFromCompany(companyName):
         for person in tqdm(extractedData, desc="Processing people", colour="cyan"):
             linkedinUrl = person.get("linkedin", "")
             if linkedinUrl:
-                emails = getEmailFromSalesQL(linkedinUrl, salesqlApiKey)
-                person["emails"] = prioritizeEmails(emails.get("emails", []))
+                salesqlData = getEmailFromSalesQL(linkedinUrl, salesqlApiKey)
+                person["emails"] = prioritizeEmails(salesqlData.get("emails", []))
+                
+                # Update empty position with title from SalesQL if available
+                if not person.get("position") and salesqlData.get("title"):
+                    person["position"] = salesqlData["title"]
+                
                 if person["emails"]:  # Only keep people with non-empty emails
                     peopleWithEmails.append(person)
                     # Extract domains from emails

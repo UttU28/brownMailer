@@ -5,6 +5,7 @@ colorama
 tqdm
 requests
 python-dotenv
+bs4
 
 ollama
 openai==0.28
@@ -17,3 +18,4 @@ google-auth-httplib2
 fastapi
 uvicorn
 fastapi[all]
+sqlalchemy

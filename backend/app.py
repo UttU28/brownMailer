@@ -6,9 +6,12 @@ from typing import Optional
 import json
 import os
 from datetime import datetime
-
+from colorama import Fore, Style
+from bs4 import BeautifulSoup
 from utils.aaPeopleFromCompany import getPeopleFromCompany
 from utils.abDraftingEmail import createDraft
+from utils.prompts import HLTS_SYSTEM_PROMPT, HLTS_USER_PROMPT, VRFY_SYSTEM_PROMPT, VRFY_USER_PROMPT
+from utils.llms import callOllama
 
 app = FastAPI()
 
@@ -49,22 +52,24 @@ class CompanyRequest(BaseModel):
     companyName: str
     position: Optional[str] = None
     jobId: Optional[str] = None
+    jobDescriptionHtml: Optional[str] = None
 
 class EmailRequest(BaseModel):
     email: str
+    name: str
+    companyName: Optional[str] = None
     position: Optional[str] = None
     jobId: Optional[str] = None
+    jobDescriptionHtml: Optional[str] = None
+
 
 @app.post("/getPeople")
 async def getPeople(request: CompanyRequest):
     print(f"Fetching people from company: {request.companyName}")
-    if request.position:
-        print(f"Position: {request.position}")
-    if request.jobId:
-        print(f"Job ID: {request.jobId}")
+    # if request:
+        # print(f"Position: {request.position}")
+        # print(f"Job ID: {request.jobId}")
     
-    print(request.companyName, request.position, request.jobId)
-
     # Check cache first
     cache = load_cache()
     if request.companyName in cache:
@@ -95,22 +100,34 @@ async def getPeople(request: CompanyRequest):
 @app.post("/sendEmail")
 async def sendEmail(request: EmailRequest):
     try:
-        print(f"Adding email to queue: {request.email}")
-        if request.position:
-            print(f"For position: {request.position}")
-        if request.jobId:
-            print(f"Job ID: {request.jobId}")
+        print(f"{Fore.CYAN}Adding email to queue for {request.name}: {request.email}{Style.RESET_ALL}")
+        # if request:
+        #     print(f"{Fore.CYAN}For position: {request.position}{Style.RESET_ALL}")
+        #     print(f"{Fore.CYAN}Job ID: {request.jobId}{Style.RESET_ALL}")
             
-        # Here you would typically call your email drafting function
-        # createDraft(request.email, position=request.position, jobId=request.jobId)
+        if request.jobDescriptionHtml:
+            soup = BeautifulSoup(request.jobDescriptionHtml, 'html.parser')
+            jobDescription = '\n'.join(line.strip() for line in soup.get_text().splitlines() if line.strip())
+        else:
+            jobDescription = None
+        jobCompany = request.companyName
+
+
+        highlightSkills = callOllama(HLTS_SYSTEM_PROMPT, HLTS_USER_PROMPT.format(jobDescription=jobDescription))
+        verifiedSkills = callOllama(VRFY_SYSTEM_PROMPT, VRFY_USER_PROMPT.format(jobDescription=jobDescription, highlightSkills=highlightSkills))
+
+        createDraft(request.email, request.name, jobCompany, request.position, verifiedSkills)
         
         return JSONResponse(content={
             "status": "success",
             "message": "Email added to queue",
             "email": request.email,
+            "name": request.name,
             "metadata": {
+                "company": jobCompany,
                 "position": request.position,
-                "jobId": request.jobId
+                "jobId": request.jobId,
+                "hasJobDescription": bool(jobDescription)
             }
         })
     except Exception as e:
@@ -121,6 +138,7 @@ async def sendEmail(request: EmailRequest):
                 "message": str(e)
             }
         )
+
 
 if __name__ == "__main__":
     import uvicorn

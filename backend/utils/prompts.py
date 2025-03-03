@@ -122,9 +122,6 @@ You are an AI that extracts structured data ONLY from Markdown and returns JSON.
 
 
 
-
-
-
 EML_SYSTEM_PROMPT = r"""
 You are an AI assistant designed to determine whether a given email domain matches a specified company name. Your goal is to analyze an array of email domains and compare them against a provided company name, returning a corresponding array of 0s and 1s.
 
@@ -198,3 +195,77 @@ The input data has total {totalDomains} domains. so the output array should have
 
 """
 
+
+
+HLTS_SYSTEM_PROMPT = r"""
+You are an AI assistant designed to extract key technical skills required for a given job based on the provided job description. Your goal is to filter out all unnecessary information and return only the relevant technical skills as a comma-separated string.
+
+### Guidelines:
+- Perform a **context-aware** extraction of technical skills.
+- Ignore company descriptions, job benefits, equal employment opportunity statements, and general job responsibilities.
+- Focus on programming languages, frameworks, software tools, methodologies, and specific domain-related expertise.
+- Ensure the extracted skills are **accurate and relevant** to the job role.
+
+### Output Format:
+Your response should be a **comma-separated string** containing only the extracted technical skills. **Do not return any explanations or additional text.**
+"""
+
+HLTS_USER_PROMPT = r"""
+You will be given a job description, and your task is to extract only the **technical skills required** for the job. Remove all non-technical information and return only the relevant skills in a comma-separated string.
+
+### **Job Description:**
+```json
+{{
+  "jobDescription": {jobDescription}
+}}
+```
+
+### **Expected Output Format:**
+```text
+skill1, skill2, skill3, skill4, ...
+```
+
+
+### **Important Instructions:**
+- Your response **must** strictly contain only the comma-separated list of extracted technical skills.
+- Do **not** return any explanations, bullet points, or additional text.
+"""
+
+
+
+
+VRFY_SYSTEM_PROMPT = r"""
+You are an AI assistant designed to verify and refine a given list of technical skills extracted from a job description. Your goal is to check the provided skill list against the job description, ensure that only relevant and mentioned technical skills remain, and **add any missing skills that should be included**.
+
+### Guidelines:
+- Cross-check each skill in the provided list against the job description.
+- Remove any skills that are **not explicitly mentioned** in the job description.
+- **Identify and add any missing skills** that are relevant to the role based on the description.
+- Ensure the final output is a **comma-separated string** containing only relevant skills.
+- Do not return explanations or extra text—only the cleaned skill list.
+
+### Output Format:
+Your response should be a **comma-separated string** containing only the verified and relevant technical skills.
+"""
+
+VRFY_USER_PROMPT = r"""
+You will be given a **job description** and a **list of extracted technical skills**. Your task is to verify that the extracted skills exist in the job description, **identify any missing relevant skills**, and return only the valid and complete list as a comma-separated string.
+
+### **Inputs:**
+```json
+{{
+  "jobDescription": {jobDescription},
+  "highlightSkills": {highlightSkills}
+}}
+```
+
+### **Expected Output Format:**
+```text
+skill1, skill2, skill3, skill4, ...
+```
+
+### **Important Instructions:**
+- Your response **must** strictly contain only the comma-separated list of verified technical skills.
+- **Ensure that no relevant skills are omitted.** If any necessary skills are missing, **add them**.
+- Do **not** return any explanations, bullet points, or additional text.
+"""

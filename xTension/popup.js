@@ -69,23 +69,25 @@ async function loadPreviousResults() {
 
 async function searchFromJobPage(tab) {
     try {
-        // Execute script to get company info from the page
+        // Execute script to get company info and job description HTML from the page
         const results = await chrome.scripting.executeScript({
             target: { tabId: tab.id },
             func: () => {
                 const companyElement = document.querySelector('.job-details-jobs-unified-top-card__company-name a');
                 const positionElement = document.querySelector('.job-details-jobs-unified-top-card__job-title h1');
                 const applyButton = document.querySelector('.jobs-apply-button');
+                const jobDescriptionElement = document.querySelector('.jobs-description__content');
 
                 return {
                     companyName: companyElement ? companyElement.textContent.trim() : null,
                     position: positionElement ? positionElement.textContent.trim() : '',
-                    jobId: applyButton ? applyButton.getAttribute('data-job-id') : ''
+                    jobId: applyButton ? applyButton.getAttribute('data-job-id') : '',
+                    jobDescriptionHtml: jobDescriptionElement ? jobDescriptionElement.outerHTML : null
                 };
             }
         });
 
-        const { companyName, position, jobId } = results[0].result;
+        const { companyName, position, jobId, jobDescriptionHtml } = results[0].result;
         if (!companyName) {
             throw new Error('Could not find company name on the page');
         }
@@ -109,11 +111,16 @@ async function searchFromJobPage(tab) {
         // Start loading animation
         startLoadingAnimation(companyName);
 
-        // Make the API request
+        // Make the API request with job description HTML
         const response = await fetch('http://localhost:3000/getPeople', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ companyName, position, jobId })
+            body: JSON.stringify({ 
+                companyName, 
+                position, 
+                jobId,
+                jobDescriptionHtml 
+            })
         });
 
         if (!response.ok) {
@@ -138,7 +145,6 @@ async function searchFromJobPage(tab) {
     } finally {
         stopLoadingAnimation();
         document.getElementById("loadingMessage").style.display = "none";
-        // Ensure input is cleared in case of error
         document.getElementById("companyInput").value = "";
     }
 }
@@ -215,7 +221,7 @@ function displayResults(data) {
                 <div class="email-text" title="${firstEmail}">@${emailDomain}</div>
             </td>
             <td>
-                <div class="send-btn" data-email="${firstEmail}" title="Send Email">
+                <div class="send-btn" data-email="${firstEmail}" data-name="${person.fullName}" title="Send Email">
                     <i class="fas fa-envelope"></i>
                 </div>
             </td>
@@ -237,8 +243,9 @@ function displayResults(data) {
     document.querySelectorAll(".send-btn").forEach(button => {
         button.addEventListener("click", async () => {
             const email = button.getAttribute("data-email");
+            const name = button.getAttribute("data-name");
             if (email && email !== "No email available") {
-                await sendEmail(email, currentJobInfo);
+                await sendEmail(email, name, currentJobInfo);
             }
         });
     });
@@ -379,15 +386,46 @@ async function fetchPeople() {
     }
 }
 
-// Update the sendEmail function to include job info
-async function sendEmail(email, jobInfo = null) {
+// Update sendEmail function to include job description HTML
+async function sendEmail(email, name, jobInfo = null) {
+    if (!email || !name) {
+        showNotification("Error: Name and email are required");
+        return;
+    }
+
     try {
-        const payload = { email };
-        
-        // If we have job info, add it to the payload
-        if (jobInfo) {
+        // Get company name from the header
+        const companyHeader = document.getElementById("companyHeader");
+        const companyNameElement = companyHeader.querySelector(".company-name");
+        const companyName = companyNameElement ? companyNameElement.textContent.trim() : null;
+
+        const payload = { 
+            email,
+            name,
+            companyName 
+        };
+
+        // If we have job info, get the job description HTML
+        if (jobInfo && jobInfo.position) {
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            if (tab.url.startsWith('https://www.linkedin.com/jobs/view/')) {
+                const results = await chrome.scripting.executeScript({
+                    target: { tabId: tab.id },
+                    func: () => {
+                        const jobDescriptionElement = document.querySelector('.jobs-description__content');
+                        return jobDescriptionElement ? jobDescriptionElement.outerHTML : null;
+                    }
+                });
+                payload.jobDescriptionHtml = results[0].result;
+            }
+            
             payload.position = jobInfo.position;
             payload.jobId = jobInfo.jobId;
+        }
+
+        let notificationMessage = `Added to email queue:\nName: ${name}\nEmail: ${email}\nCompany: ${companyName}`;
+        if (jobInfo && jobInfo.position) {
+            notificationMessage += `\nPosition: ${jobInfo.position}`;
         }
 
         const response = await fetch("http://localhost:3000/sendEmail", {
@@ -399,7 +437,7 @@ async function sendEmail(email, jobInfo = null) {
         const data = await response.json();
 
         if (response.ok) {
-            showNotification(`Added to email queue: ${email}`);
+            showNotification(notificationMessage);
         } else {
             showNotification(`Failed to queue email: ${data.message || 'Unknown error'}`);
         }
