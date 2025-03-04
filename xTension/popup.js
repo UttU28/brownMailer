@@ -216,13 +216,15 @@ function displayResults(data) {
     });
 
     data.forEach(person => {
-        const firstEmail = person.emails.length > 0 ? person.emails[0] : "No email available";
+        const firstEmail = person.emails.length > 0 && person.emails[0] !== "undefined" ? person.emails[0] : "-";
+        const secondEmail = person.emails.length > 1 && person.emails[1] !== "undefined" ? person.emails[1] : "-";
         const position = person.position || "No position listed";
         const linkedinURL = person.linkedin || "#";
         
-        // Extract domain from email
-        const emailDomain = firstEmail !== "No email available" ? firstEmail.split('@')[1] : "No email available";
-
+        // Extract domains
+        const firstDomain = firstEmail !== "-" && firstEmail !== "undefined" ? "@" + firstEmail.split('@')[1] : "-";
+        const secondDomain = secondEmail !== "-" && secondEmail !== "undefined" ? "@" + secondEmail.split('@')[1] : "-";
+        
         const row = document.createElement("tr");
         row.innerHTML = `
             <td>
@@ -231,13 +233,41 @@ function displayResults(data) {
                     <span class="name-text">${person.fullName}</span>
                 </a>
             </td>
-            <td class="position">${position}</td>
-            <td>
-                <div class="email-text" title="${firstEmail}">@${emailDomain}</div>
+            <td class="position" title="${position}">${position}</td>
+            <td class="email-cell">
+                <div class="email-container">
+                    <div class="email-text" title="${firstEmail}">${firstDomain}</div>
+                    ${firstEmail !== "-" ? `
+                    <div class="email-dropdown">
+                        <button class="dropdown-option copy-option" data-email="${firstEmail}">
+                            <i class="fas fa-copy"></i> Copy Email
+                        </button>
+                        <button class="dropdown-option send-option" 
+                            data-email="${firstEmail}" 
+                            data-name="${person.fullName}"
+                            data-position="${position}">
+                            <i class="fas fa-paper-plane"></i> Send Email
+                        </button>
+                    </div>
+                    ` : ''}
+                </div>
             </td>
-            <td>
-                <div class="send-btn" data-email="${firstEmail}" data-name="${person.fullName}" title="Send Email">
-                    <i class="fas fa-envelope"></i>
+            <td class="email-cell">
+                <div class="email-container">
+                    <div class="email-text" title="${secondEmail}">${secondDomain}</div>
+                    ${secondEmail !== "-" ? `
+                    <div class="email-dropdown">
+                        <button class="dropdown-option copy-option" data-email="${secondEmail}">
+                            <i class="fas fa-copy"></i> Copy Email
+                        </button>
+                        <button class="dropdown-option send-option" 
+                            data-email="${secondEmail}" 
+                            data-name="${person.fullName}"
+                            data-position="${position}">
+                            <i class="fas fa-paper-plane"></i> Send Email
+                        </button>
+                    </div>
+                    ` : ''}
                 </div>
             </td>
         `;
@@ -245,41 +275,113 @@ function displayResults(data) {
         tableBody.appendChild(row);
     });
 
-    // Add click handlers for email copying
-    document.querySelectorAll(".email-text").forEach(emailDiv => {
-        emailDiv.addEventListener("click", () => {
-            const email = emailDiv.getAttribute("title"); // Use full email from title attribute
-            copyToClipboard(email);
-            showNotification("Email copied to clipboard!");
+    // Handle email text clicks to show dropdown
+    document.querySelectorAll('.email-text').forEach(emailText => {
+        emailText.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Close all other dropdowns
+            document.querySelectorAll('.email-dropdown').forEach(dropdown => {
+                dropdown.classList.remove('active');
+                dropdown.style.top = '';
+                dropdown.style.left = '';
+                dropdown.style.width = '';
+            });
+
+            // Show and position this dropdown
+            const dropdown = emailText.nextElementSibling;
+            const rect = emailText.getBoundingClientRect();
+            
+            // Calculate position
+            const top = rect.bottom + window.scrollY;
+            const left = rect.left;
+            
+            // Position the dropdown
+            dropdown.style.top = `${top}px`;
+            dropdown.style.left = `${left}px`;
+            dropdown.style.width = `${rect.width}px`;
+            
+            // Show the dropdown
+            dropdown.classList.add('active');
         });
     });
 
-    // Add click handlers for send email buttons
-    document.querySelectorAll(".send-btn").forEach(button => {
-        button.addEventListener("click", async () => {
-            const email = button.getAttribute("data-email");
-            const name = button.getAttribute("data-name");
-            if (email && email !== "No email available") {
-                await sendEmail(email, name, currentJobInfo);
+    // Handle copy option clicks
+    document.querySelectorAll('.copy-option').forEach(option => {
+        option.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const email = option.dataset.email;
+            if (email && email !== "-") {
+                copyToClipboard(email);
+                showNotification(`Copied email:\n${email}`);
             }
+            // Close dropdown
+            option.closest('.email-dropdown').classList.remove('active');
+        });
+    });
+
+    // Handle send option clicks
+    document.querySelectorAll('.send-option').forEach(option => {
+        option.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const email = option.dataset.email;
+            const name = option.dataset.name;
+            const position = option.dataset.position;
+
+            if (email && email !== "-") {
+                const emailData = {
+                    recipientEmail: email,
+                    recipientName: name,
+                    position: position,
+                    companyName: document.querySelector('#companyHeader .company-name')?.textContent || '',
+                    jobInfo: currentJobInfo || {}
+                };
+                
+                await sendEmail(emailData);
+            }
+            // Close dropdown
+            option.closest('.email-dropdown').classList.remove('active');
+        });
+    });
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.email-dropdown').forEach(dropdown => {
+            dropdown.classList.remove('active');
         });
     });
 }
 
-function showNotification(message) {
+function showNotification(message, type = 'info') {
     const notification = document.querySelector('.notification');
     notification.textContent = message;
+    
+    // Set notification type
+    notification.setAttribute('data-type', type);
+    
+    // Set background color based on type
+    switch(type) {
+        case 'error':
+            notification.style.backgroundColor = 'rgba(220, 53, 69, 0.9)';
+            break;
+        case 'success':
+            notification.style.backgroundColor = 'rgba(40, 167, 69, 0.9)';
+            break;
+        case 'info':
+            notification.style.backgroundColor = 'rgba(0, 123, 255, 0.9)';
+            break;
+    }
+    
     notification.style.display = 'block';
     
     // Reset animation
     notification.style.animation = 'none';
     notification.offsetHeight; // Trigger reflow
-    notification.style.animation = 'fadeInOut 2s ease-in-out';
+    notification.style.animation = 'fadeInOut 3s ease-in-out';
 
     // Hide notification after animation
     setTimeout(() => {
         notification.style.display = 'none';
-    }, 2000);
+    }, 3000);
 }
 
 function copyToClipboard(text) {
@@ -401,27 +503,17 @@ async function fetchPeople() {
     }
 }
 
-// Update sendEmail function to include job description HTML
-async function sendEmail(email, name, jobInfo = null) {
-    if (!email || !name) {
-        showNotification("Error: Name and email are required");
-        return;
-    }
-
+// Update sendEmail function to handle new parameter structure
+async function sendEmail(emailData) {
     try {
-        // Get company name from the header
-        const companyHeader = document.getElementById("companyHeader");
-        const companyNameElement = companyHeader.querySelector(".company-name");
-        const companyName = companyNameElement ? companyNameElement.textContent.trim() : null;
+        // Show initial notification with loading state
+        showNotification(`📧 Sending email request...\nTo: ${emailData.recipientName}\nPosition: ${emailData.position || 'N/A'}`, 'info');
+        
+        // Close dropdown
+        closeAllDropdowns();
 
-        const payload = { 
-            email,
-            name,
-            companyName 
-        };
-
-        // If we have job info, get the job description HTML
-        if (jobInfo && jobInfo.position) {
+        // Get job description HTML if we're on a LinkedIn job page
+        if (emailData.jobInfo && emailData.jobInfo.jobId) {
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
             if (tab.url.startsWith('https://www.linkedin.com/jobs/view/')) {
                 const results = await chrome.scripting.executeScript({
@@ -431,33 +523,87 @@ async function sendEmail(email, name, jobInfo = null) {
                         return jobDescriptionElement ? jobDescriptionElement.outerHTML : null;
                     }
                 });
-                payload.jobDescriptionHtml = results[0].result;
+                emailData.jobInfo.jobDescriptionHtml = results[0].result;
             }
-            
-            payload.position = jobInfo.position;
-            payload.jobId = jobInfo.jobId;
         }
 
-        let notificationMessage = `Added to email queue:\nName: ${name}\nEmail: ${email}\nCompany: ${companyName}`;
-        if (jobInfo && jobInfo.position) {
-            notificationMessage += `\nPosition: ${jobInfo.position}`;
-        }
+        // Ensure all required fields are present
+        const requestData = {
+            recipientEmail: emailData.recipientEmail,
+            recipientName: emailData.recipientName,
+            companyName: emailData.companyName || document.querySelector('#companyHeader .company-name')?.textContent?.trim() || '',
+            position: emailData.position || '',
+            jobInfo: emailData.jobInfo || {}
+        };
+
+        console.log('Sending email request:', requestData);
 
         const response = await fetch(`${BASE_URL}/sendEmail`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+            headers: { 
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify(requestData)
         });
 
-        const data = await response.json();
-
-        if (response.ok) {
-            showNotification(notificationMessage);
-        } else {
-            showNotification(`Failed to queue email: ${data.message || 'Unknown error'}`);
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Failed to queue email (${response.status})`);
         }
+
+        const data = await response.json();
+        // Show success notification
+        showNotification(`✅ Email queued successfully!\nTo: ${emailData.recipientName}\nPosition: ${emailData.position || 'N/A'}`, 'success');
+        return data;
     } catch (error) {
         console.error("Error sending email:", error);
-        showNotification("Error connecting to email service");
+        showNotification(`❌ Error sending email\nTo: ${emailData.recipientName}\nError: ${error.message}`, 'error');
+        throw error;
     }
 }
+
+// Helper function to close all dropdowns
+function closeAllDropdowns() {
+    document.querySelectorAll('.email-dropdown').forEach(dropdown => {
+        dropdown.classList.remove('active');
+        dropdown.style.top = '';
+        dropdown.style.left = '';
+        dropdown.style.width = '';
+    });
+}
+
+// Update the send option click handler
+document.addEventListener('click', async (e) => {
+    if (e.target.classList.contains('send-option')) {
+        e.stopPropagation();
+        const option = e.target;
+        const email = option.dataset.email;
+        const name = option.dataset.name;
+        const position = option.dataset.position;
+        const companyName = document.querySelector('#companyHeader .company-name')?.textContent?.trim();
+
+        if (email && email !== "-") {
+            try {
+                const emailData = {
+                    recipientEmail: email,
+                    recipientName: name,
+                    position: position,
+                    companyName: companyName,
+                    jobInfo: {
+                        jobId: null,
+                        positionName: position,
+                        companyName: companyName
+                    }
+                };
+                
+                await sendEmail(emailData);
+            } catch (error) {
+                console.error('Failed to send email:', error);
+            }
+        }
+        
+        // Close dropdown
+        closeAllDropdowns();
+    }
+});

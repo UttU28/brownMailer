@@ -55,12 +55,11 @@ class CompanyRequest(BaseModel):
     jobDescriptionHtml: Optional[str] = None
 
 class EmailRequest(BaseModel):
-    email: str
-    name: str
+    recipientEmail: str
+    recipientName: str
     companyName: Optional[str] = None
     position: Optional[str] = None
-    jobId: Optional[str] = None
-    jobDescriptionHtml: Optional[str] = None
+    jobInfo: Optional[dict] = None
 
 
 @app.post("/getPeople")
@@ -100,33 +99,33 @@ async def getPeople(request: CompanyRequest):
 @app.post("/sendEmail")
 async def sendEmail(request: EmailRequest):
     try:
-        print(f"{Fore.CYAN}Adding email to queue for {request.name}: {request.email}{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}Adding email to queue for {request.recipientName}: {request.recipientEmail}{Style.RESET_ALL}")
         # if request:
         #     print(f"{Fore.CYAN}For position: {request.position}{Style.RESET_ALL}")
-        #     print(f"{Fore.CYAN}Job ID: {request.jobId}{Style.RESET_ALL}")
+        #     if request.jobInfo:
+        #         print(f"{Fore.CYAN}Job ID: {request.jobInfo.get('jobId')}{Style.RESET_ALL}")
             
-        if request.jobDescriptionHtml:
-            soup = BeautifulSoup(request.jobDescriptionHtml, 'html.parser')
+        jobDescription = None
+        if request.jobInfo and request.jobInfo.get('jobDescriptionHtml'):
+            soup = BeautifulSoup(request.jobInfo['jobDescriptionHtml'], 'html.parser')
             jobDescription = '\n'.join(line.strip() for line in soup.get_text().splitlines() if line.strip())
-        else:
-            jobDescription = None
+            
         jobCompany = request.companyName
-
 
         highlightSkills = callOllama(HLTS_SYSTEM_PROMPT, HLTS_USER_PROMPT.format(jobDescription=jobDescription))
         verifiedSkills = callOllama(VRFY_SYSTEM_PROMPT, VRFY_USER_PROMPT.format(jobDescription=jobDescription, highlightSkills=highlightSkills))
 
-        createDraft(request.email, request.name, jobCompany, request.position, verifiedSkills)
+        createDraft(request.recipientEmail, request.recipientName, jobCompany, request.position, verifiedSkills)
         
         return JSONResponse(content={
             "status": "success",
             "message": "Email added to queue",
-            "email": request.email,
-            "name": request.name,
+            "email": request.recipientEmail,
+            "name": request.recipientName,
             "metadata": {
                 "company": jobCompany,
                 "position": request.position,
-                "jobId": request.jobId,
+                "jobId": request.jobInfo.get('jobId') if request.jobInfo else None,
                 "hasJobDescription": bool(jobDescription)
             }
         })
