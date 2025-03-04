@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>People Finder</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
     <div class="container">
@@ -14,6 +14,31 @@
                 <img src="icons/icon128.png" alt="BrownMailer Icon" class="header-icon">
                 <h1>Brown Mailer</h1>
                 <img src="icons/icon128.png" alt="BrownMailer Icon" class="header-icon">
+            </div>
+            <div class="header-with-status">
+                <div class="status-indicators">
+                    <div class="status-item">
+                        <div class="status-light" id="company-status"></div>
+                        <div class="status-text">
+                            <span class="status-label" id="company-label">COMPANY</span>
+                            <span class="status-value" id="company-value">Not Found</span>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-light" id="position-status"></div>
+                        <div class="status-text">
+                            <span class="status-label" id="position-label">POSITION</span>
+                            <span class="status-value" id="position-value">Not Found</span>
+                        </div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-light" id="description-status"></div>
+                        <div class="status-text">
+                            <span class="status-label" id="description-label">JOB DESCRIPTION</span>
+                            <span class="status-value" id="description-value">DESCRIPTION MISSING</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="input-container">
@@ -52,6 +77,22 @@
                 </a>
             </div>
         </footer>
+    </div>
+    <div class="email-dropdown">
+        <button class="dropdown-option copy-option" data-email="${firstEmail}">
+            <i class="fas fa-copy"></i> Copy Email
+        </button>
+        <button class="dropdown-option send-option" data-email="${firstEmail}" data-name="${person.fullName}" data-position="${position}">
+            <i class="fas fa-paper-plane"></i> Send Email
+        </button>
+    </div>
+    <div class="email-dropdown">
+        <button class="dropdown-option copy-option" data-email="${secondEmail}">
+            <i class="fas fa-copy"></i> Copy Email
+        </button>
+        <button class="dropdown-option send-option" data-email="${secondEmail}" data-name="${person.fullName}" data-position="${position}">
+            <i class="fas fa-paper-plane"></i> Send Email
+        </button>
     </div>
     <script src="popup.js"></script>
 </body>

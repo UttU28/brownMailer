@@ -8,8 +8,100 @@ document.getElementById("companyInput").addEventListener("keypress", function (e
     }
 });
 
+// Function to update status indicators
+function updateStatusIndicators(isLinkedInJobPage = false) {
+    const companyStatus = document.getElementById('company-status');
+    const companyLabel = document.getElementById('company-label');
+    const companyValue = document.getElementById('company-value');
+    const positionStatus = document.getElementById('position-status');
+    const positionLabel = document.getElementById('position-label');
+    const positionValue = document.getElementById('position-value');
+    const descriptionStatus = document.getElementById('description-status');
+    const descriptionLabel = document.getElementById('description-label');
+    const descriptionValue = document.getElementById('description-value');
+
+    if (!isLinkedInJobPage) {
+        // Red status for all when not on LinkedIn jobs page
+        companyStatus.className = 'status-light red';
+        positionStatus.className = 'status-light red';
+        descriptionStatus.className = 'status-light red';
+        
+        companyValue.textContent = 'COMPANY MISSING';
+        positionValue.textContent = 'POSITION MISSING';
+        descriptionLabel.textContent = 'DESCRIPTION MISSING';
+        
+        companyLabel.style.display = 'none';
+        positionLabel.style.display = 'none';
+        descriptionLabel.style.display = 'none';
+        return;
+    }
+
+    // Check for company, position and description
+    chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+        const tab = tabs[0];
+        const results = await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: () => {
+                const companyElement = document.querySelector('.job-details-jobs-unified-top-card__company-name a');
+                const positionElement = document.querySelector('.job-details-jobs-unified-top-card__job-title h1');
+                const jobDescriptionElement = document.querySelector('.jobs-description__content');
+                return {
+                    company: companyElement ? companyElement.textContent.trim() : null,
+                    position: positionElement ? positionElement.textContent.trim() : null,
+                    hasDescription: !!jobDescriptionElement
+                };
+            }
+        });
+
+        const { company, position, hasDescription } = results[0].result;
+
+        // Update company status
+        if (company) {
+            companyStatus.className = 'status-light green';
+            companyValue.textContent = company.toUpperCase();
+            companyLabel.style.display = 'none';
+        } else {
+            companyStatus.className = 'status-light yellow';
+            companyValue.textContent = 'COMPANY MISSING';
+            companyLabel.style.display = 'none';
+        }
+
+        // Update position status
+        if (position) {
+            positionStatus.className = 'status-light green';
+            positionValue.textContent = position.toUpperCase();
+            positionLabel.style.display = 'none';
+        } else {
+            positionStatus.className = 'status-light yellow';
+            positionValue.textContent = 'POSITION MISSING';
+            positionLabel.style.display = 'none';
+        }
+
+        // Update description status
+        if (hasDescription) {
+            descriptionStatus.className = 'status-light green';
+            descriptionValue.textContent = 'DESCRIPTION FOUND';
+            descriptionLabel.style.display = 'none';
+        } else {
+            descriptionStatus.className = 'status-light yellow';
+            descriptionValue.textContent = 'DESCRIPTION NOT FOUND';
+            descriptionLabel.style.display = 'none';
+        }
+    });
+}
+
 // Load previous results when popup opens
-document.addEventListener('DOMContentLoaded', loadPreviousResults);
+document.addEventListener('DOMContentLoaded', async () => {
+    // Check if we're on a LinkedIn job page
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const isLinkedInJobPage = tab.url.startsWith('https://www.linkedin.com/jobs/view/');
+    
+    // Update status indicators
+    updateStatusIndicators(isLinkedInJobPage);
+    
+    // Rest of the loadPreviousResults logic
+    loadPreviousResults();
+});
 
 async function loadPreviousResults() {
     const responseContainer = document.getElementById("responseContainer");
