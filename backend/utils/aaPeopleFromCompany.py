@@ -134,24 +134,50 @@ def getPeopleFromCompany(companyName):
         try: thisArray = json.loads(resArray)
         except: thisArray = [1] * len(domainList)
         domainResponses = list(zip(domainList, thisArray))
-        excludedDomains = {'gmail.com', 'yahoo.com', 'outlook.com'}
-        matchingDomains = [domain for domain, value in domainResponses   if value == 1 and domain not in excludedDomains]
+        excludedDomains = {'gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'aol.com', 'icloud.com', 'me.com', 'live.com', 'msn.com'}
+        matchingDomains = [domain for domain, value in domainResponses if value == 1 and domain not in excludedDomains]
 
         # Filter people with matching domains and keep only matching emails
-        filteredPeople = []
+        matchingDomainPeople = []
+        nonMatchingDomainPeople = []
+        
         for person in peopleWithEmails:
+            personCopy = person.copy()
+            # Get matching domain emails
             matchingEmails = [email for email in person["emails"] 
                             if any(email.endswith("@" + domain) for domain in matchingDomains)]
-            personCopy = person.copy()
+            
+            # Get non-matching emails, excluding personal email domains
+            nonMatchingEmails = [email for email in person["emails"]
+                               if not any(email.endswith("@" + domain) for domain in matchingDomains)
+                               and not any(email.lower().endswith("@" + domain) for domain in excludedDomains)]
+            
             if matchingEmails:
-                personCopy["emails"] = matchingEmails
+                # Has matching domain emails
+                if len(matchingEmails) >= 2:
+                    # If we have 2 or more matching domain emails, use the first two
+                    personCopy["emails"] = [matchingEmails[0], matchingEmails[1]]
+                else:
+                    # If we have only 1 matching domain email, use it as primary and first non-personal email as secondary
+                    personCopy["emails"] = [
+                        matchingEmails[0],
+                        nonMatchingEmails[0] if nonMatchingEmails else ""
+                    ]
+                matchingDomainPeople.append(personCopy)
             else:
-                # If no matching emails found, use the first email in the list
-                personCopy["emails"] = [person["emails"][0]] if person["emails"] else []
-            if personCopy["emails"]:  # Only append if there are any emails
-                filteredPeople.append(personCopy)
+                # No matching domain emails - use first non-personal email as primary and second as secondary
+                nonPersonalEmails = [email for email in person["emails"]
+                                   if not any(email.lower().endswith("@" + domain) for domain in excludedDomains)]
+                
+                personCopy["emails"] = [
+                    nonPersonalEmails[0] if nonPersonalEmails else "",
+                    nonPersonalEmails[1] if len(nonPersonalEmails) > 1 else ""
+                ]
+                if personCopy["emails"][0]:  # Only append if at least primary email exists
+                    nonMatchingDomainPeople.append(personCopy)
         
-        peopleWithEmails = filteredPeople
+        # Combine lists with matching domain people first
+        peopleWithEmails = matchingDomainPeople + nonMatchingDomainPeople
 
 
         print(f"Found {len(peopleWithEmails)} people with company email domains")
