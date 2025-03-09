@@ -15,6 +15,7 @@ from utils.llms import callOllama
 
 app = FastAPI()
 
+# Configure CORS
 origins = [
     "http://localhost",
     "http://localhost:3000",
@@ -50,24 +51,18 @@ def save_cache(cache_data):
 
 class CompanyRequest(BaseModel):
     companyName: str
-    position: Optional[str] = None
-    jobId: Optional[str] = None
-    jobDescriptionHtml: Optional[str] = None
 
 class EmailRequest(BaseModel):
     recipientEmail: str
     recipientName: str
+    position: Optional[str] = None           # Position we're applying to
     companyName: Optional[str] = None
-    position: Optional[str] = None
-    jobInfo: Optional[dict] = None
-
+    jobId: Optional[str] = None
+    jobDescriptionHtml: Optional[str] = None
 
 @app.post("/getPeople")
 async def getPeople(request: CompanyRequest):
-    print(f"Fetching people from company: {request.companyName}")
-    # if request:
-        # print(f"Position: {request.position}")
-        # print(f"Job ID: {request.jobId}")
+    print(f"Fetching people from company: {request}")
     
     # Check cache first
     cache = load_cache()
@@ -90,8 +85,6 @@ async def getPeople(request: CompanyRequest):
         "data": people,
         "metadata": {
             "company": request.companyName,
-            "position": request.position,
-            "jobId": request.jobId,
             "cached": request.companyName in cache
         }
     })
@@ -100,22 +93,45 @@ async def getPeople(request: CompanyRequest):
 async def sendEmail(request: EmailRequest):
     try:
         print(f"{Fore.CYAN}Adding email to queue for {request.recipientName}: {request.recipientEmail}{Style.RESET_ALL}")
-        # if request:
-        #     print(f"{Fore.CYAN}For position: {request.position}{Style.RESET_ALL}")
-        #     if request.jobInfo:
-        #         print(f"{Fore.CYAN}Job ID: {request.jobInfo.get('jobId')}{Style.RESET_ALL}")
-            
+        print(f"{Fore.CYAN}Job Position: {request.position}{Style.RESET_ALL}")
+        
         jobDescription = None
-        if request.jobInfo and request.jobInfo.get('jobDescriptionHtml'):
-            soup = BeautifulSoup(request.jobInfo['jobDescriptionHtml'], 'html.parser')
-            jobDescription = '\n'.join(line.strip() for line in soup.get_text().splitlines() if line.strip())
-            
+        hasJobDescription = False
+        
+        # Try to extract job description if HTML is provided
+        if request.jobDescriptionHtml:
+            try:
+                soup = BeautifulSoup(request.jobDescriptionHtml, 'html.parser')
+                jobDescription = '\n'.join(line.strip() for line in soup.get_text().splitlines() if line.strip())
+                if jobDescription:
+                    hasJobDescription = True
+                    print(f"{Fore.GREEN}Successfully extracted job description ({len(jobDescription)} chars){Style.RESET_ALL}")
+            except Exception as e:
+                print(f"{Fore.YELLOW}Error parsing job description HTML: {str(e)}{Style.RESET_ALL}")
+        
         jobCompany = request.companyName
 
+        # Generate fallback job description if none is provided
+        if not hasJobDescription:
+            print(f"{Fore.YELLOW}No job description provided, using fallback{Style.RESET_ALL}")
+            fallbackDescription = f"""
+            Job Position: {request.position or 'Not specified'}
+            Company: {jobCompany or 'Not specified'}
+            """
+            jobDescription = fallbackDescription
+        
+        # Process with LLM models if we have a job description
         highlightSkills = callOllama(HLTS_SYSTEM_PROMPT, HLTS_USER_PROMPT.format(jobDescription=jobDescription))
         verifiedSkills = callOllama(VRFY_SYSTEM_PROMPT, VRFY_USER_PROMPT.format(jobDescription=jobDescription, highlightSkills=highlightSkills))
 
-        createDraft(request.recipientEmail, request.recipientName, jobCompany, request.position, verifiedSkills)
+        # Pass individual parameters to createDraft
+        createDraft(
+            request.recipientEmail, 
+            request.recipientName, 
+            jobCompany, 
+            request.position,  # Job position we're applying to
+            verifiedSkills
+        )
         
         return JSONResponse(content={
             "status": "success",
@@ -124,12 +140,13 @@ async def sendEmail(request: EmailRequest):
             "name": request.recipientName,
             "metadata": {
                 "company": jobCompany,
-                "position": request.position,
-                "jobId": request.jobInfo.get('jobId') if request.jobInfo else None,
-                "hasJobDescription": bool(jobDescription)
+                "jobPosition": request.position,
+                "jobId": request.jobId,
+                "hasJobDescription": hasJobDescription
             }
         })
     except Exception as e:
+        print(f"{Fore.RED}Error sending email: {str(e)}{Style.RESET_ALL}")
         return JSONResponse(
             status_code=500,
             content={
@@ -137,7 +154,6 @@ async def sendEmail(request: EmailRequest):
                 "message": str(e)
             }
         )
-
 
 if __name__ == "__main__":
     import uvicorn
